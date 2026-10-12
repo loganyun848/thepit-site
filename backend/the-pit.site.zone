@@ -1,0 +1,10 @@
+; the-pit.site -> GitHub Pages (loganyun848/thepit-site)
+; Cloudflare DNS > Import 에서 이 파일을 선택. "Proxy imported DNS records" 는 끌 것.
+$ORIGIN the-pit.site.
+$TTL 300
+
+@     IN  A      185.199.108.153
+@     IN  A      185.199.109.153
+@     IN  A      185.199.110.153
+@     IN  A      185.199.111.153
+www   IN  CNAME  loganyun848.github.io.
