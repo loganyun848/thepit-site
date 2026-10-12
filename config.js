@@ -16,7 +16,7 @@ window.THEPIT_CONFIG = {
   INSTAGRAM_URL: "",
 
   // 문의 / 이메일 접수용 주소
-  CONTACT_EMAIL: "ceo@integree.io",
+  CONTACT_EMAIL: "marketing@lecple.com",
 
   // 이번 회차 안내 (상단 공지 띠에 표시, 비우면 숨김)
   ROUND_NOTICE: "EP.1 now casting · One applicant is picked at random every episode",

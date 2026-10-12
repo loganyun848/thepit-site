@@ -19,7 +19,7 @@
 
 const SHEET_NAME = "신청";               // 접수 시트 이름 (없으면 자동 생성)
 const DRIVE_FOLDER_NAME = "THE PIT 신청사진"; // 사진 저장 폴더 (없으면 자동 생성)
-const NOTIFY_EMAIL = "ceo@integree.io";  // 새 신청이 오면 알림 받을 주소 ("" 이면 안 보냄)
+const NOTIFY_EMAIL = "marketing@lecple.com";  // 새 신청이 오면 알림 받을 주소 ("" 이면 안 보냄)
 const SEND_CONFIRM_MAIL = true;          // 신청자에게 접수 확인 메일 발송
 const BRAND = "THE PIT";
 
