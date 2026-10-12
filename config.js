@@ -10,7 +10,7 @@ window.THEPIT_CONFIG = {
 
   // 유튜브 채널 / 예고편 링크
   YOUTUBE_CHANNEL_URL: "https://www.youtube.com/@the_pit_video",
-  TRAILER_URL: "https://youtu.be/kyT88ZIhH9E",
+  TRAILER_URL: "https://www.youtube.com/watch?v=kyT88ZIhH9E",
 
   // 인스타그램 (없으면 빈 문자열)
   INSTAGRAM_URL: "",

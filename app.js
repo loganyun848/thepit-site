@@ -8,7 +8,22 @@
   /* ── 설정값을 링크에 반영 ── */
   const yt = CFG.YOUTUBE_CHANNEL_URL || "#";
   const trailer = CFG.TRAILER_URL || yt;
-  ["trailerBtn", "trailerThumb", "ep0"].forEach(id => { const a = $("#" + id); if (a) a.href = trailer; });
+  ["trailerBtn", "trailerThumb", "trailerOpen", "ep0"].forEach(id => { const a = $("#" + id); if (a) a.href = trailer; });
+
+  /* ── 썸네일 클릭 → 페이지 안에서 바로 재생 (영상 ID를 찾을 수 있을 때만) ── */
+  const vidMatch = /(?:youtu\.be\/|[?&]v=|\/embed\/)([\w-]{11})/.exec(trailer);
+  const thumbLink = $("#trailerThumb");
+  if (vidMatch && thumbLink) {
+    thumbLink.addEventListener("click", e => {
+      e.preventDefault();
+      const f = document.createElement("iframe");
+      f.src = `https://www.youtube-nocookie.com/embed/${vidMatch[1]}?autoplay=1&rel=0`;
+      f.title = "THE PIT trailer";
+      f.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+      f.allowFullscreen = true;
+      thumbLink.replaceWith(f);
+    });
+  }
   ["footYoutube", "doneYoutube"].forEach(id => { const a = $("#" + id); if (a) a.href = yt; });
   if (CFG.INSTAGRAM_URL) { const a = $("#footInsta"); a.href = CFG.INSTAGRAM_URL; a.hidden = false; }
   const mail = "mailto:" + (CFG.CONTACT_EMAIL || "");
