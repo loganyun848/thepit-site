@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>THE PIT · 당신이 주인공이 되는 애니메이션</title>
-  <meta name="description" content="사진 한 장과 당신의 이야기를 보내주세요. 매 에피소드, 신청자 중 한 분을 무작위로 뽑아 당신을 닮은 캐릭터로 애니메이션을 만듭니다. 주식회사 렉플 THE PIT." />
-  <meta property="og:title" content="THE PIT · 다음 에피소드의 주인공은 당신입니다" />
-  <meta property="og:description" content="사진과 이야기를 올리면, 무작위로 선정된 한 사람이 애니메이션의 주인공이 됩니다. 무료." />
+  <title>THE PIT · Be the hero of the next episode</title>
+  <meta name="description" content="Send one photo and your story. Every episode, we randomly pick one applicant and turn them into the hero of a brand-new animated story. Free to join. By LECPLE." />
+  <meta property="og:title" content="THE PIT · The next episode's hero is you" />
+  <meta property="og:description" content="Upload a photo and your story. One applicant is picked at random to become the hero of an animated episode. Free." />
   <meta property="og:image" content="https://the-pit.site/assets/thumb-find-your-color.webp" />
   <meta property="og:url" content="https://the-pit.site/" />
   <meta property="og:type" content="website" />
@@ -14,34 +14,33 @@
   <link rel="icon" href="assets/golky.webp" type="image/webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500;1,9..144,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500;1,9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ───────── 상단 공지 띠 ───────── -->
+  <!-- ───────── Notice bar ───────── -->
   <div class="notice" id="notice" hidden>
     <span class="notice__key">🔑</span>
     <span id="noticeText"></span>
-    <a href="#apply" class="notice__link">지금 신청하기 →</a>
+    <a href="#apply" class="notice__link">Apply now →</a>
   </div>
 
-  <!-- ───────── 내비게이션 ───────── -->
+  <!-- ───────── Navigation ───────── -->
   <header class="nav" id="nav">
-    <a href="#top" class="nav__brand" aria-label="THE PIT 홈">
+    <a href="#top" class="nav__brand" aria-label="THE PIT home">
       <img src="assets/golky.webp" alt="" class="nav__golky" />
       <span class="nav__word">THE <em>PIT</em></span>
     </a>
     <nav class="nav__links" id="navLinks">
-      <a href="#story">이야기</a>
-      <a href="#how">참여 방법</a>
-      <a href="#characters">등장인물</a>
-      <a href="#episodes">에피소드</a>
+      <a href="#story">Story</a>
+      <a href="#how">How it works</a>
+      <a href="#characters">Cast</a>
+      <a href="#episodes">Episodes</a>
       <a href="#faq">FAQ</a>
-      <a href="#apply" class="btn btn--gold btn--sm">주인공 신청</a>
+      <a href="#apply" class="btn btn--gold btn--sm">Apply</a>
     </nav>
-    <button class="nav__toggle" id="navToggle" aria-label="메뉴 열기" aria-expanded="false">
+    <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
   </header>
@@ -50,29 +49,29 @@
 
     <!-- ───────── HERO ───────── -->
     <section class="hero">
-      <div class="hero__bg" role="img" aria-label="회색 도시 위에 금빛 열쇠를 든 연우와 골키"></div>
+      <div class="hero__bg" role="img" aria-label="Yeonwoo holding a golden key above a gray city, with Golky beside her"></div>
       <div class="hero__veil"></div>
       <div class="hero__inner">
-        <p class="eyebrow reveal">무성(無聲) 3D 애니메이션 시리즈 · 참여 무료</p>
+        <p class="eyebrow reveal">Silent 3D animated series · Free to join</p>
         <h1 class="hero__title reveal">
-          다음 에피소드의<br />주인공은, <span class="gold">당신</span>입니다.
+          The next episode's<br />hero is <span class="gold">you</span>.
         </h1>
         <p class="hero__lead reveal">
-          사진 한 장과 당신의 이야기를 보내주세요.<br class="br-desktop" />
-          매 에피소드마다 신청자 중 <strong>한 사람을 무작위로</strong> 뽑아,
-          당신을 닮은 캐릭터로 새 이야기를 그립니다.
+          Send one photo and your story.<br class="br-desktop" />
+          Every episode, we <strong>randomly pick one applicant</strong> and redraw them
+          as a character in a brand-new story.
         </p>
         <div class="hero__cta reveal">
-          <a href="#apply" class="btn btn--gold btn--lg">🔑 주인공 신청하기</a>
-          <a id="trailerBtn" href="#" target="_blank" rel="noopener" class="btn btn--ghost btn--lg">▶ 예고편 보기</a>
+          <a href="#apply" class="btn btn--gold btn--lg">🔑 Apply to be the hero</a>
+          <a id="trailerBtn" href="#" target="_blank" rel="noopener" class="btn btn--ghost btn--lg">▶ Watch the trailer</a>
         </div>
         <ul class="hero__facts reveal">
-          <li><b>무료</b><span>참여 비용 없음</span></li>
-          <li><b>랜덤 1명</b><span>에피소드마다 추첨</span></li>
-          <li><b>대사 없음</b><span>전 세계 누구나 보는 이야기</span></li>
+          <li><b>Free</b><span>No cost to take part</span></li>
+          <li><b>1 random pick</b><span>Every single episode</span></li>
+          <li><b>No dialogue</b><span>A story anyone on Earth can watch</span></li>
         </ul>
       </div>
-      <a href="#story" class="hero__scroll" aria-label="아래로">
+      <a href="#story" class="hero__scroll" aria-label="Scroll down">
         <span></span>
       </a>
     </section>
@@ -82,30 +81,31 @@
       <div class="container grid-2">
         <div class="story__media reveal">
           <a id="trailerThumb" href="#" target="_blank" rel="noopener" class="thumb">
-            <img src="assets/thumb-find-your-color.webp" alt="FIND YOUR COLOR 예고편 썸네일" loading="lazy" />
+            <img src="assets/thumb-find-your-color.webp" alt="FIND YOUR COLOR trailer thumbnail" loading="lazy" />
             <span class="thumb__play" aria-hidden="true">▶</span>
             <span class="thumb__time">4:32</span>
           </a>
-          <p class="story__caption">EP.0 「FIND YOUR COLOR」 · 연우와 골키가 회색 도시를 물들입니다</p>
+          <p class="story__caption">EP.0 “FIND YOUR COLOR” · Yeonwoo and Golky bring color back to a gray city</p>
         </div>
         <div class="story__text">
-          <p class="eyebrow reveal">세계관</p>
-          <h2 class="reveal">모두가 똑같은 <span class="gray">회색 옷</span>을<br />배급받는 도시가 있습니다.</h2>
+          <p class="eyebrow reveal">The story, and your place in it</p>
+          <h2 class="reveal">Every episode, someone new<br />picks up the key. <span class="gold">Next time, it could be you.</span></h2>
           <p class="reveal">
-            선택이라는 말조차 없는 곳. 공장 검수원 <strong>연우</strong>는 매일 똑같은 옷에
-            도장을 찍다가, 옷 사이에서 혼자 빛나는 <strong class="gold">금색 열쇠</strong>를 줍습니다.
+            THE PIT is set in a city where everyone is issued the same <span class="gray">gray clothes</span>.
+            In Episode 0, factory inspector <strong>Yeonwoo</strong> finds a <strong class="gold">golden key</strong>,
+            meets <strong>Golky</strong>, and starts waking the city up, one person at a time.
           </p>
           <p class="reveal">
-            거울에 열쇠를 꽂자 마스코트 <strong>골키</strong>가 튀어나오고,
-            열쇠를 한 번 돌릴 때마다 사람들은 한 명씩 <em>자기만의 색</em>으로 깨어납니다.
-            회사원은 록스타로, 배달원은 라이더로, 감찰관장은 화려한 슈트로.
+            Here's the twist: Yeonwoo isn't the only hero. For every new episode we take <em>one real person</em>
+            from the applications, turn them into a character, and hand them the key.
+            Your face. Your shape. Your story. Your city.
           </p>
           <blockquote class="pull reveal">
-            색은 언제나 <b>사람의 옷</b>에서 시작됩니다.<br />
-            그리고 다음 열쇠는, 당신의 가슴에 꽂힙니다.
+            No casting call. No followers needed.<br />
+            Just a photo, a true story, and <b>a little luck</b>.
           </blockquote>
           <ul class="story__tags reveal">
-            <li>3D 카툰</li><li>무성 코미디</li><li>판타지</li><li>16:9 · 5분+</li><li>숏폼 스핀오프 9부작</li>
+            <li>3D cartoon</li><li>Silent comedy</li><li>Fantasy</li><li>16:9 · 5 min+</li><li>Short-form spin-offs</li>
           </ul>
         </div>
       </div>
@@ -114,81 +114,81 @@
     <!-- ───────── HOW IT WORKS ───────── -->
     <section class="section section--how" id="how">
       <div class="container">
-        <p class="eyebrow center reveal">참여 방법</p>
-        <h2 class="center reveal">열쇠가 당신에게 오는 네 단계</h2>
-        <p class="center sub reveal">신청은 5분이면 끝납니다. 선정되면 이메일로 먼저 연락드리고, 본인 확인 후 제작을 시작합니다.</p>
+        <p class="eyebrow center reveal">How it works</p>
+        <h2 class="center reveal">Four steps until the key reaches you</h2>
+        <p class="center sub reveal">Applying takes five minutes. If you're picked, we email you first and start production once we've confirmed it's really you.</p>
 
         <ol class="steps">
           <li class="step reveal">
             <span class="step__num">01</span>
             <div class="step__icon">📷</div>
-            <h3>사진과 이야기를 올려요</h3>
-            <p>정면 얼굴 사진 1장, 전신 사진 1장, 그리고 <b>당신이 회색이었던 순간</b>과 <b>찾고 싶은 색</b>을 짧게 적어주세요.</p>
+            <h3>Upload your photos and story</h3>
+            <p>One face photo, one full-body photo, and a few lines about <b>your gray days</b> and <b>the color you want to find</b>.</p>
           </li>
           <li class="step reveal">
             <span class="step__num">02</span>
             <div class="step__icon">🎲</div>
-            <h3>골키가 열쇠를 돌려요</h3>
-            <p>에피소드마다 신청자 중 <b>한 사람을 무작위 추첨</b>합니다. 외모·팔로워 수·직업은 보지 않습니다. 열쇠는 누구에게나 공평하게 떨어집니다.</p>
+            <h3>Golky turns the key</h3>
+            <p>Each episode, <b>one applicant is drawn at random</b>. Looks, follower counts and jobs don't matter. The key can land on anyone.</p>
           </li>
           <li class="step reveal">
             <span class="step__num">03</span>
             <div class="step__icon">✨</div>
-            <h3>당신을 닮은 캐릭터가 태어나요</h3>
-            <p>렉플의 <b>생체 데이터 기반 아바타 기술</b>로 얼굴과 체형의 특징을 살린 카툰 캐릭터를 만듭니다. 마르게 보정하지 않습니다. 당신의 핏 그대로.</p>
+            <h3>A character that looks like you is born</h3>
+            <p>Using LECPLE's <b>body-data avatar engine</b>, we build a cartoon character that keeps your face and your real proportions. No slimming. Your fit, as it is.</p>
           </li>
           <li class="step reveal">
             <span class="step__num">04</span>
             <div class="step__icon">🎬</div>
-            <h3>에피소드로 세상에 공개돼요</h3>
-            <p>완성된 에피소드는 유튜브에 공개되고, <b>크레딧에 당신의 이름</b>이 올라갑니다. 영상은 당신의 채널에서도 자유롭게 공유할 수 있어요.</p>
+            <h3>Your episode goes live</h3>
+            <p>Published on YouTube with <b>your name in the credits</b>. Share it on your own channels as much as you like.</p>
           </li>
         </ol>
 
         <div class="tech reveal">
           <div class="tech__text">
-            <p class="eyebrow">왜 닮을 수 있나요?</p>
-            <h3>1,800명의 몸을 재서 만든 아바타 엔진</h3>
-            <p>주식회사 렉플은 21대의 4K 볼륨 카메라로 1,800명 액터의 신체 51개 항목을 측정해 15만 개 이상의 생체 데이터를 구축했습니다. 이 데이터가 사진 속 당신의 비율을 캐릭터 비율로 옮기고, 의상까지 그 체형에 맞게 입힙니다.</p>
+            <p class="eyebrow">Why will it look like you?</p>
+            <h3>An avatar engine built by measuring 1,800 real bodies</h3>
+            <p>LECPLE measured 51 body points on 1,800 actors with 21 4K volumetric cameras, building a database of more than 150,000 body data points. That data maps the proportions in your photo onto a character, and fits the clothes to that body.</p>
           </div>
           <ul class="tech__nums">
-            <li><b>150,000+</b><span>생체 데이터</span></li>
-            <li><b>1,800명</b><span>실측 액터</span></li>
-            <li><b>51개</b><span>신체 측정 항목</span></li>
+            <li><b>150,000+</b><span>Body data points</span></li>
+            <li><b>1,800</b><span>Actors measured</span></li>
+            <li><b>51</b><span>Measurement points</span></li>
           </ul>
         </div>
       </div>
     </section>
 
-    <!-- ───────── CHARACTERS ───────── -->
+    <!-- ───────── CAST ───────── -->
     <section class="section section--chars" id="characters">
       <div class="container">
-        <p class="eyebrow center reveal">등장인물</p>
-        <h2 class="center reveal">이 도시를 물들이는 사람들</h2>
+        <p class="eyebrow center reveal">The cast</p>
+        <h2 class="center reveal">The people who color this city</h2>
         <div class="chars">
           <article class="char reveal">
             <div class="char__img char__img--yeonwoo"></div>
             <div class="char__body">
-              <span class="char__role">주인공</span>
-              <h3>연우</h3>
-              <p>회색 공장의 검수원. 금색 열쇠를 주운 뒤 도시 사람들을 한 명씩 패셔니스타로 깨우는 장난꾸러기. 실존 패션 인플루언서를 캐릭터로 재창조했습니다.</p>
+              <span class="char__role">Lead</span>
+              <h3>Yeonwoo</h3>
+              <p>An inspector at the gray factory. After finding the golden key she wakes the city up one person at a time, more mischief-maker than hero. Recreated from a real fashion influencer.</p>
             </div>
           </article>
           <article class="char reveal">
-            <div class="char__img char__img--golky"><img src="assets/golky.webp" alt="골키" loading="lazy" /></div>
+            <div class="char__img char__img--golky"><img src="assets/golky.webp" alt="Golky" loading="lazy" /></div>
             <div class="char__body">
-              <span class="char__role">마스코트</span>
-              <h3>골키 <small>Golky</small></h3>
-              <p>거울 속에 봉인돼 있던 등에 열쇠가 달린 존재. 색을 만드는 게 아니라 <b>돌려주는</b> 친구. 영화 유일의 비인간 캐릭터이자, 당신의 변신을 옆에서 지켜봐 줄 파트너.</p>
+              <span class="char__role">Mascot</span>
+              <h3>Golky</h3>
+              <p>Sealed inside a mirror, with a key on his back. He doesn't create color, he <b>gives it back</b>. The series' only non-human character, and your partner through the transformation.</p>
             </div>
           </article>
           <article class="char char--you reveal">
             <div class="char__img char__img--you"><span>?</span></div>
             <div class="char__body">
-              <span class="char__role">다음 주인공</span>
-              <h3>당신</h3>
-              <p>아직 회색 옷을 입고 있나요? 괜찮아요. 열쇠는 매일 똑같은 하루 한가운데에서 나옵니다. 사진과 이야기를 남겨주세요.</p>
-              <a href="#apply" class="btn btn--gold btn--sm">내 이야기 올리기</a>
+              <span class="char__role">Next hero</span>
+              <h3>You</h3>
+              <p>Still wearing gray? That's fine. The key always turns up in the middle of an ordinary day. Leave us your photo and your story.</p>
+              <a href="#apply" class="btn btn--gold btn--sm">Upload my story</a>
             </div>
           </article>
         </div>
@@ -198,8 +198,8 @@
     <!-- ───────── EPISODES ───────── -->
     <section class="section section--eps" id="episodes">
       <div class="container">
-        <p class="eyebrow center reveal">에피소드</p>
-        <h2 class="center reveal">지금까지의 주인공들</h2>
+        <p class="eyebrow center reveal">Episodes</p>
+        <h2 class="center reveal">Heroes so far</h2>
         <div class="eps">
           <a id="ep0" href="#" target="_blank" rel="noopener" class="ep reveal">
             <div class="ep__thumb">
@@ -207,34 +207,34 @@
               <span class="ep__time">4:32</span>
             </div>
             <div class="ep__body">
-              <span class="ep__label">EP.0 · 공개</span>
+              <span class="ep__label">EP.0 · Released</span>
               <h3>FIND YOUR COLOR</h3>
-              <p>주인공 연우 · 모든 이야기가 시작된 첫 열쇠</p>
+              <p>Hero: Yeonwoo · Where the first key was found</p>
             </div>
           </a>
           <div class="ep ep--next reveal">
             <div class="ep__thumb ep__thumb--empty"><span>🔑</span></div>
             <div class="ep__body">
-              <span class="ep__label ep__label--open">EP.1 · 모집 중</span>
-              <h3>다음 주인공은?</h3>
-              <p>이번 회차 신청자 중 한 분을 무작위로 선정합니다.</p>
-              <a href="#apply" class="btn btn--gold btn--sm">신청하기</a>
+              <span class="ep__label ep__label--open">EP.1 · Now casting</span>
+              <h3>Who's next?</h3>
+              <p>One applicant from this round will be picked at random.</p>
+              <a href="#apply" class="btn btn--gold btn--sm">Apply</a>
             </div>
           </div>
           <div class="ep ep--soon reveal">
             <div class="ep__thumb ep__thumb--empty"><span>·</span></div>
             <div class="ep__body">
-              <span class="ep__label">EP.2 · 예정</span>
-              <h3>당신의 도시에서</h3>
-              <p>직장, 학교, 지하철… 당신의 일상이 무대가 됩니다.</p>
+              <span class="ep__label">EP.2 · Coming</span>
+              <h3>In your city</h3>
+              <p>Your office, your school, your train line becomes the stage.</p>
             </div>
           </div>
           <div class="ep ep--soon reveal">
             <div class="ep__thumb ep__thumb--empty"><span>·</span></div>
             <div class="ep__body">
-              <span class="ep__label">EP.3 · 예정</span>
-              <h3>우리는 모두 다른 핏</h3>
-              <p>세상 어디에도 없는 당신의 룩으로.</p>
+              <span class="ep__label">EP.3 · Coming</span>
+              <h3>Everyone's a different fit</h3>
+              <p>A look that exists nowhere else but on you.</p>
             </div>
           </div>
         </div>
@@ -244,209 +244,212 @@
     <!-- ───────── APPLY ───────── -->
     <section class="section section--apply" id="apply">
       <div class="container container--narrow">
-        <p class="eyebrow center reveal">주인공 신청</p>
-        <h2 class="center reveal">열쇠를 받을 준비가 되셨나요?</h2>
+        <p class="eyebrow center reveal">Apply</p>
+        <h2 class="center reveal">Ready to receive the key?</h2>
         <p class="center sub reveal">
-          아래 내용을 남겨주시면 다음 에피소드 추첨 대상에 포함됩니다.<br class="br-desktop" />
-          사진은 <b>캐릭터 제작 목적으로만</b> 사용하며, 선정되지 않은 분의 사진은 회차 종료 후 삭제합니다.
+          Fill in the form below to enter the draw for the next episode.<br class="br-desktop" />
+          Photos are used <b>only to build your character</b>. Photos of applicants who aren't selected are deleted when the round ends.
         </p>
 
         <form id="applyForm" class="form reveal" novalidate>
-          <!-- 스팸 방지 (사람은 보이지 않음) -->
+          <!-- Spam trap (invisible to people) -->
           <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" />
 
-          <!-- 1. 기본 정보 -->
+          <!-- 1. Basics -->
           <fieldset class="fs">
-            <legend><span class="fs__num">1</span> 기본 정보</legend>
+            <legend><span class="fs__num">1</span> About you</legend>
             <div class="row">
               <label class="field">
-                <span class="field__label">이름 또는 닉네임 <i>*</i></span>
-                <input type="text" name="name" required maxlength="30" placeholder="크레딧에 올라갈 이름" />
-                <small>본명이 아니어도 괜찮아요. 영상 크레딧에 이 이름이 표기됩니다.</small>
+                <span class="field__label">Name or nickname <i>*</i></span>
+                <input type="text" name="name" required maxlength="40" placeholder="The name that goes in the credits" />
+                <small>It doesn't have to be your real name. This is what appears in the video credits.</small>
               </label>
               <label class="field">
-                <span class="field__label">이메일 <i>*</i></span>
-                <input type="email" name="email" required placeholder="선정 시 연락드릴 주소" />
+                <span class="field__label">Email <i>*</i></span>
+                <input type="email" name="email" required placeholder="Where we'll reach you if you're picked" />
               </label>
             </div>
             <div class="row">
               <label class="field">
-                <span class="field__label">연락처 <small>(선택)</small></span>
-                <input type="tel" name="phone" placeholder="010-0000-0000" />
+                <span class="field__label">Country <i>*</i></span>
+                <input type="text" name="country" required maxlength="60" list="countryList" placeholder="e.g. United States, Japan, Brazil" autocomplete="country-name" />
+                <small>Your part of the world could become the episode's setting.</small>
               </label>
               <label class="field">
-                <span class="field__label">연령대 <i>*</i></span>
+                <span class="field__label">Age group <i>*</i></span>
                 <select name="ageGroup" required>
-                  <option value="">선택</option>
-                  <option>14~19세 (보호자 동의 필요)</option>
-                  <option>20대</option>
-                  <option>30대</option>
-                  <option>40대</option>
-                  <option>50대</option>
-                  <option>60대 이상</option>
+                  <option value="">Select</option>
+                  <option>14–19 (guardian consent required)</option>
+                  <option>20s</option>
+                  <option>30s</option>
+                  <option>40s</option>
+                  <option>50s</option>
+                  <option>60+</option>
                 </select>
               </label>
             </div>
-            <div class="row">
-              <label class="field">
-                <span class="field__label">사는 곳 <small>(선택)</small></span>
-                <input type="text" name="city" maxlength="40" placeholder="예: 부산, 대한민국 / Tokyo, Japan" />
-                <small>에피소드 배경을 당신의 도시로 잡을 수도 있어요.</small>
-              </label>
-              <label class="field">
-                <span class="field__label">SNS 계정 <small>(선택)</small></span>
-                <input type="text" name="sns" maxlength="80" placeholder="@instagram / 유튜브 / 틱톡" />
-                <small>공개 시 함께 태그해 드립니다.</small>
-              </label>
-            </div>
+            <label class="field">
+              <span class="field__label">Social handle <small>(optional)</small></span>
+              <input type="text" name="sns" maxlength="80" placeholder="@instagram / YouTube / TikTok" />
+              <small>We'll tag you when your episode is released.</small>
+            </label>
+            <datalist id="countryList">
+              <option value="United States"></option><option value="United Kingdom"></option><option value="Canada"></option><option value="Australia"></option>
+              <option value="Japan"></option><option value="South Korea"></option><option value="China"></option><option value="Taiwan"></option><option value="Hong Kong"></option>
+              <option value="Singapore"></option><option value="Malaysia"></option><option value="Indonesia"></option><option value="Philippines"></option><option value="Thailand"></option><option value="Vietnam"></option><option value="India"></option>
+              <option value="Germany"></option><option value="France"></option><option value="Spain"></option><option value="Italy"></option><option value="Netherlands"></option><option value="Sweden"></option><option value="Norway"></option><option value="Denmark"></option><option value="Finland"></option><option value="Poland"></option><option value="Portugal"></option><option value="Ireland"></option><option value="Switzerland"></option><option value="Austria"></option><option value="Belgium"></option><option value="Türkiye"></option>
+              <option value="Brazil"></option><option value="Mexico"></option><option value="Argentina"></option><option value="Chile"></option><option value="Colombia"></option>
+              <option value="United Arab Emirates"></option><option value="Saudi Arabia"></option><option value="Israel"></option><option value="Egypt"></option><option value="South Africa"></option><option value="Nigeria"></option><option value="Kenya"></option>
+              <option value="New Zealand"></option>
+            </datalist>
           </fieldset>
 
-          <!-- 2. 나의 이야기 -->
+          <!-- 2. Your story -->
           <fieldset class="fs">
-            <legend><span class="fs__num">2</span> 나의 이야기</legend>
+            <legend><span class="fs__num">2</span> Your story</legend>
 
             <label class="field">
-              <span class="field__label">한 줄 소개 <i>*</i></span>
-              <input type="text" name="headline" required maxlength="40" placeholder="예: 매일 같은 출근길, 가방 속엔 못 입은 빨간 코트" />
-              <small>에피소드 제목과 썸네일 문구의 재료가 됩니다. (40자 이내)</small>
+              <span class="field__label">One-line intro <i>*</i></span>
+              <input type="text" name="headline" required maxlength="60" placeholder="e.g. Same commute every day, a red coat I never wore in my bag" />
+              <small>Raw material for the episode title and thumbnail. (60 characters max)</small>
             </label>
 
             <label class="field">
-              <span class="field__label">나의 회색이었던 순간, 그리고 찾고 싶은 색 <i>*</i></span>
+              <span class="field__label">Your gray moment, and the color you want to find <i>*</i></span>
               <textarea name="story" required minlength="100" maxlength="1200" rows="7"
-                placeholder="예) 남들 눈에 띄지 않으려고 늘 검정 옷만 입었어요. 그런데 작년에 친구 결혼식에서 처음 입은 노란 원피스가…&#10;&#10;· 어떤 하루를 보내고 있나요?&#10;· 언제 '회색'이라고 느꼈나요?&#10;· 열쇠가 돌아간다면 어떤 모습이 되고 싶나요?"></textarea>
-              <div class="field__meta"><small>100~1,200자 · 길게 쓰지 않아도 돼요. 진짜 이야기면 충분합니다.</small><span class="counter" id="storyCount">0 / 1200</span></div>
+                placeholder="e.g. I always wore black so nobody would notice me. Then at a friend's wedding last year I wore a yellow dress for the first time…&#10;&#10;· What does an ordinary day look like for you?&#10;· When did you feel “gray”?&#10;· If the key turned, who would you want to become?"></textarea>
+              <div class="field__meta"><small>100–1,200 characters. It doesn't have to be long. A true story is enough.</small><span class="counter" id="storyCount">0 / 1200</span></div>
             </label>
 
             <div class="field">
-              <span class="field__label">나를 표현하는 색 <i>*</i></span>
-              <div class="chips" role="radiogroup" aria-label="나를 표현하는 색">
-                <label class="chip"><input type="radio" name="color" value="레드" required /><span style="--c:#E8503A">레드</span></label>
-                <label class="chip"><input type="radio" name="color" value="오렌지" /><span style="--c:#F28C28">오렌지</span></label>
-                <label class="chip"><input type="radio" name="color" value="골드" /><span style="--c:#F5B942">골드</span></label>
-                <label class="chip"><input type="radio" name="color" value="그린" /><span style="--c:#4CAF6E">그린</span></label>
-                <label class="chip"><input type="radio" name="color" value="스카이" /><span style="--c:#4DB6E8">스카이</span></label>
-                <label class="chip"><input type="radio" name="color" value="블루" /><span style="--c:#3F5BD9">블루</span></label>
-                <label class="chip"><input type="radio" name="color" value="퍼플" /><span style="--c:#8E5BD9">퍼플</span></label>
-                <label class="chip"><input type="radio" name="color" value="핑크" /><span style="--c:#F06BA8">핑크</span></label>
-                <label class="chip"><input type="radio" name="color" value="화이트" /><span style="--c:#F4F1EA">화이트</span></label>
-                <label class="chip"><input type="radio" name="color" value="블랙" /><span style="--c:#222">블랙</span></label>
+              <span class="field__label">Your color <i>*</i></span>
+              <div class="chips" role="radiogroup" aria-label="Your color">
+                <label class="chip"><input type="radio" name="color" value="Red" required /><span style="--c:#E8503A">Red</span></label>
+                <label class="chip"><input type="radio" name="color" value="Orange" /><span style="--c:#F28C28">Orange</span></label>
+                <label class="chip"><input type="radio" name="color" value="Gold" /><span style="--c:#F5B942">Gold</span></label>
+                <label class="chip"><input type="radio" name="color" value="Green" /><span style="--c:#4CAF6E">Green</span></label>
+                <label class="chip"><input type="radio" name="color" value="Sky" /><span style="--c:#4DB6E8">Sky</span></label>
+                <label class="chip"><input type="radio" name="color" value="Blue" /><span style="--c:#3F5BD9">Blue</span></label>
+                <label class="chip"><input type="radio" name="color" value="Purple" /><span style="--c:#8E5BD9">Purple</span></label>
+                <label class="chip"><input type="radio" name="color" value="Pink" /><span style="--c:#F06BA8">Pink</span></label>
+                <label class="chip"><input type="radio" name="color" value="White" /><span style="--c:#F4F1EA">White</span></label>
+                <label class="chip"><input type="radio" name="color" value="Black" /><span style="--c:#222">Black</span></label>
               </div>
             </div>
 
             <div class="field">
-              <span class="field__label">열쇠가 돌아가면 입고 싶은 스타일 <small>(복수 선택)</small></span>
+              <span class="field__label">The style you'd wear when the key turns <small>(pick any)</small></span>
               <div class="chips chips--text">
-                <label class="chip"><input type="checkbox" name="style" value="록스타" /><span>🎸 록스타</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="레드카펫" /><span>✨ 레드카펫</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="스트리트" /><span>🛹 스트리트</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="클래식 수트" /><span>🕴 클래식 수트</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="히어로" /><span>🦸 히어로</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="라이더" /><span>🏍 라이더</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="빈티지" /><span>📻 빈티지</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="스포티" /><span>🏃 스포티</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="한복·전통" /><span>🎎 한복·전통</span></label>
-                <label class="chip"><input type="checkbox" name="style" value="맡길게요" /><span>🔑 골키에게 맡길게요</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Rock star" /><span>🎸 Rock star</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Red carpet" /><span>✨ Red carpet</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Street" /><span>🛹 Street</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Classic suit" /><span>🕴 Classic suit</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Hero" /><span>🦸 Hero</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Rider" /><span>🏍 Rider</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Vintage" /><span>📻 Vintage</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Sporty" /><span>🏃 Sporty</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Traditional dress" /><span>🎎 Traditional dress</span></label>
+                <label class="chip"><input type="checkbox" name="style" value="Let Golky decide" /><span>🔑 Let Golky decide</span></label>
               </div>
             </div>
 
             <div class="row">
               <label class="field">
-                <span class="field__label">변신하고 싶은 장소 <small>(선택)</small></span>
-                <input type="text" name="place" maxlength="60" placeholder="예: 지하철 2호선, 우리 회사 탕비실, 학교 급식실" />
+                <span class="field__label">Where would you transform? <small>(optional)</small></span>
+                <input type="text" name="place" maxlength="80" placeholder="e.g. The 7:40 train, the office kitchen, the school cafeteria" />
               </label>
               <label class="field">
-                <span class="field__label">골키에게 한마디 <small>(선택)</small></span>
-                <input type="text" name="toGolky" maxlength="80" placeholder="예: 내 열쇠는 어디 있니?" />
+                <span class="field__label">A word for Golky <small>(optional)</small></span>
+                <input type="text" name="toGolky" maxlength="100" placeholder="e.g. Where's my key?" />
               </label>
             </div>
           </fieldset>
 
-          <!-- 3. 사진 -->
+          <!-- 3. Photos -->
           <fieldset class="fs">
-            <legend><span class="fs__num">3</span> 사진</legend>
-            <p class="fs__help">캐릭터 제작의 재료가 됩니다. <b>본인 사진만</b> 올려주세요. 밝은 곳에서 찍은 선명한 사진이 좋아요. (JPG·PNG·WEBP, 장당 10MB 이하)</p>
+            <legend><span class="fs__num">3</span> Photos</legend>
+            <p class="fs__help">These become the raw material for your character. <b>Upload photos of yourself only.</b> Clear photos taken in good light work best. (JPG · PNG · WEBP, up to 10MB each)</p>
             <div class="uploads">
               <div class="upload" data-key="face" data-required="1">
                 <input type="file" id="photoFace" name="photoFace" accept="image/*" required />
                 <label for="photoFace" class="upload__box">
                   <span class="upload__icon">🙂</span>
-                  <span class="upload__title">정면 얼굴 사진 <i>*</i></span>
-                  <span class="upload__desc">얼굴 전체가 보이게, 모자·선글라스 없이</span>
+                  <span class="upload__title">Face photo <i>*</i></span>
+                  <span class="upload__desc">Whole face visible, no hat or sunglasses</span>
                 </label>
-                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="삭제">✕</button></div>
+                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
               <div class="upload" data-key="body" data-required="1">
                 <input type="file" id="photoBody" name="photoBody" accept="image/*" required />
                 <label for="photoBody" class="upload__box">
                   <span class="upload__icon">🧍</span>
-                  <span class="upload__title">전신 사진 <i>*</i></span>
-                  <span class="upload__desc">머리부터 발끝까지, 평소 입는 옷으로</span>
+                  <span class="upload__title">Full-body photo <i>*</i></span>
+                  <span class="upload__desc">Head to toe, in what you usually wear</span>
                 </label>
-                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="삭제">✕</button></div>
+                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
               <div class="upload" data-key="extra1">
                 <input type="file" id="photoExtra1" name="photoExtra1" accept="image/*" />
                 <label for="photoExtra1" class="upload__box">
                   <span class="upload__icon">➕</span>
-                  <span class="upload__title">추가 사진 <small>(선택)</small></span>
-                  <span class="upload__desc">옆모습, 좋아하는 스타일, 일상 사진</span>
+                  <span class="upload__title">Extra photo <small>(optional)</small></span>
+                  <span class="upload__desc">Side profile, a style you love, everyday life</span>
                 </label>
-                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="삭제">✕</button></div>
+                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
               <div class="upload" data-key="extra2">
                 <input type="file" id="photoExtra2" name="photoExtra2" accept="image/*" />
                 <label for="photoExtra2" class="upload__box">
                   <span class="upload__icon">➕</span>
-                  <span class="upload__title">추가 사진 <small>(선택)</small></span>
-                  <span class="upload__desc">최대 2장까지</span>
+                  <span class="upload__title">Extra photo <small>(optional)</small></span>
+                  <span class="upload__desc">Up to two extras</span>
                 </label>
-                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="삭제">✕</button></div>
+                <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
             </div>
             <div class="row">
               <label class="field">
-                <span class="field__label">키 <small>(선택, cm)</small></span>
-                <input type="number" name="height" min="100" max="230" placeholder="예: 165" />
-                <small>캐릭터 비율을 잡는 데 참고합니다.</small>
+                <span class="field__label">Height <small>(optional, cm)</small></span>
+                <input type="number" name="height" min="100" max="230" placeholder="e.g. 170" />
+                <small>Helps us set your character's proportions.</small>
               </label>
               <label class="field">
-                <span class="field__label">평소 옷 사이즈 <small>(선택)</small></span>
+                <span class="field__label">Usual clothing size <small>(optional)</small></span>
                 <select name="size">
-                  <option value="">선택</option>
-                  <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>2XL 이상</option>
+                  <option value="">Select</option>
+                  <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>2XL+</option>
                 </select>
               </label>
             </div>
           </fieldset>
 
-          <!-- 4. 동의 -->
+          <!-- 4. Consent -->
           <fieldset class="fs fs--consent">
-            <legend><span class="fs__num">4</span> 확인 및 동의</legend>
-            <label class="check"><input type="checkbox" name="agreeSelf" required /><span>올린 사진은 <b>모두 본인</b>의 사진이며, 타인의 사진이 아닙니다. <i>*</i></span></label>
-            <label class="check"><input type="checkbox" name="agreePortrait" required /><span>선정 시 제 얼굴과 체형의 특징을 바탕으로 <b>캐릭터를 제작</b>하고, 완성된 애니메이션을 유튜브·SNS 등에 <b>공개 및 홍보에 사용</b>하는 데 동의합니다. <i>*</i></span></label>
-            <label class="check"><input type="checkbox" name="agreePrivacy" required /><span><a href="privacy.html" target="_blank">개인정보 수집·이용</a>에 동의합니다. (수집 항목: 이름, 이메일, 연락처, 사진, 작성 내용 / 보유 기간: 회차 종료 후 미선정자 즉시 삭제, 선정자는 제작 완료 후 1년) <i>*</i></span></label>
-            <label class="check"><input type="checkbox" name="agreeAge" required /><span>만 14세 이상이며, 만 19세 미만인 경우 <b>보호자의 동의</b>를 받았습니다. <i>*</i></span></label>
-            <label class="check"><input type="checkbox" name="agreeNews" /><span>선정 결과와 새 에피소드 소식을 이메일로 받겠습니다. (선택)</span></label>
+            <legend><span class="fs__num">4</span> Confirm &amp; consent</legend>
+            <label class="check"><input type="checkbox" name="agreeSelf" required /><span>All uploaded photos are of <b>me</b>, not of someone else. <i>*</i></span></label>
+            <label class="check"><input type="checkbox" name="agreePortrait" required /><span>If selected, I agree that a <b>character will be created</b> from my face and body features, and that the finished animation may be <b>published and promoted</b> on YouTube, social media and elsewhere. <i>*</i></span></label>
+            <label class="check"><input type="checkbox" name="agreePrivacy" required /><span>I agree to the <a href="privacy.html" target="_blank">Privacy Policy</a>. (Collected: name, email, country, photos, your answers. Kept: deleted when the round ends if not selected; one year after production if selected.) <i>*</i></span></label>
+            <label class="check"><input type="checkbox" name="agreeAge" required /><span>I am 14 or older, and if I am under 19 I have my <b>parent or guardian's consent</b>. <i>*</i></span></label>
+            <label class="check"><input type="checkbox" name="agreeNews" /><span>Email me the draw results and news about new episodes. (optional)</span></label>
           </fieldset>
 
           <div class="form__footer">
             <p class="form__note" id="formNote"></p>
             <button type="submit" class="btn btn--gold btn--lg btn--block" id="submitBtn">
-              🔑 열쇠 받기 · 신청 제출
+              🔑 Receive the key · Submit application
             </button>
-            <p class="form__fine">제출 후 접수 확인 메일이 발송됩니다. 선정되지 않더라도 다음 회차에 자동으로 다시 포함되길 원하시면 접수 확인 메일에서 선택할 수 있어요.</p>
+            <p class="form__fine">A confirmation email follows. If you'd like to stay in the draw for future rounds, you can choose that in the confirmation email.</p>
           </div>
         </form>
 
-        <!-- 제출 성공 화면 -->
+        <!-- Success -->
         <div class="done" id="doneBox" hidden>
           <img src="assets/golky.webp" alt="" class="done__golky" />
-          <h3>열쇠가 도착했습니다.</h3>
-          <p id="doneMsg">신청이 접수되었어요. 추첨 결과는 이메일로 알려드릴게요.<br />그동안 당신의 색을 조금씩 꺼내 두세요.</p>
+          <h3>The key has arrived.</h3>
+          <p id="doneMsg">Your application is in. We'll email you the draw results.<br />In the meantime, start bringing out your color.</p>
           <div class="done__actions">
-            <a id="doneYoutube" href="#" target="_blank" rel="noopener" class="btn btn--ghost">유튜브 채널 보기</a>
-            <button type="button" class="btn btn--gold" id="doneAgain">다른 이야기 더 올리기</button>
+            <a id="doneYoutube" href="#" target="_blank" rel="noopener" class="btn btn--ghost">Watch on YouTube</a>
+            <button type="button" class="btn btn--gold" id="doneAgain">Submit another story</button>
           </div>
         </div>
       </div>
@@ -455,40 +458,40 @@
     <!-- ───────── FAQ ───────── -->
     <section class="section section--faq" id="faq">
       <div class="container container--narrow">
-        <p class="eyebrow center reveal">자주 묻는 질문</p>
-        <h2 class="center reveal">궁금한 점이 있나요?</h2>
+        <p class="eyebrow center reveal">FAQ</p>
+        <h2 class="center reveal">Questions?</h2>
         <div class="faq reveal">
           <details>
-            <summary>참여 비용이 있나요?</summary>
-            <p>없습니다. 신청, 캐릭터 제작, 영상 제작 모두 무료입니다. 선정되신 분께 어떤 비용도 요구하지 않습니다. 반대로 출연료도 없습니다. 대신 완성된 영상과 캐릭터 이미지를 선물로 드립니다.</p>
+            <summary>Does it cost anything?</summary>
+            <p>No. Applying, character creation and the episode itself are all free. We never ask selected applicants for money. There's no appearance fee either. Instead, you receive the finished episode and your character artwork as a gift.</p>
           </details>
           <details>
-            <summary>어떻게 뽑나요? 꼭 예뻐야 하나요?</summary>
-            <p>에피소드마다 신청자 전체 중 한 분을 <b>무작위 추첨</b>으로 뽑습니다. 외모, 팔로워 수, 나이, 직업은 선정에 영향을 주지 않습니다. 이 이야기의 주제는 "누구나 자기 색이 있다"입니다. 체형을 마르게 보정하지도 않습니다.</p>
+            <summary>How do you choose? Do I need to be good-looking?</summary>
+            <p>Each episode, one person is drawn <b>at random</b> from all applicants. Looks, follower counts, age and job have no effect on the draw. The whole point of this story is that everyone has their own color. We don't slim down your body either.</p>
           </details>
           <details>
-            <summary>제 사진은 어디에 쓰이고, 어떻게 보관되나요?</summary>
-            <p>사진은 캐릭터의 얼굴과 체형 특징을 잡는 데만 사용합니다. 사진 원본이 영상에 그대로 나오지 않습니다. 선정되지 않은 분의 사진과 정보는 해당 회차 종료 후 즉시 삭제하고, 선정된 분의 자료는 제작 완료 후 1년 뒤 삭제합니다. 언제든 이메일로 삭제를 요청하실 수 있습니다.</p>
+            <summary>What are my photos used for, and how are they stored?</summary>
+            <p>Photos are used only to capture your face and body features for the character. Your original photos never appear in the video. If you aren't selected, your photos and information are deleted as soon as the round ends. If you are selected, your materials are deleted one year after production. You can request deletion by email at any time.</p>
           </details>
           <details>
-            <summary>선정되면 무엇을 해야 하나요?</summary>
-            <p>이메일로 본인 확인을 한 번 하고, 필요하면 추가 사진 몇 장을 더 부탁드릴 수 있습니다. 촬영이나 출연, 녹음은 없습니다. 완성 전 캐릭터 시안을 먼저 보여드리고 확인을 받습니다.</p>
+            <summary>What happens if I'm selected?</summary>
+            <p>We'll email you to confirm it's really you, and may ask for a few extra photos. There's no filming, acting or recording. Before the episode is finished, we show you the character design and ask for your approval.</p>
           </details>
           <details>
-            <summary>해외에 살아도 신청할 수 있나요?</summary>
-            <p>네. 이 시리즈는 대사가 없어서 어느 나라 분이든 주인공이 될 수 있습니다. 이야기는 한국어 또는 영어로 적어주시면 됩니다.</p>
+            <summary>Can I apply from any country?</summary>
+            <p>Yes. The series has no dialogue, so anyone from anywhere can be the hero. Write your story in English, or in your own language if that's easier. We'll manage.</p>
           </details>
           <details>
-            <summary>미성년자도 신청할 수 있나요?</summary>
-            <p>만 14세 이상부터 가능하며, 만 19세 미만은 보호자 동의가 필요합니다. 선정 시 보호자 연락처로 동의 절차를 한 번 더 진행합니다.</p>
+            <summary>Can minors apply?</summary>
+            <p>You must be 14 or older. If you're under 19, you need a parent or guardian's consent, and we'll run a consent check with them if you're selected.</p>
           </details>
           <details>
-            <summary>떨어지면 다시 신청해야 하나요?</summary>
-            <p>접수 확인 메일에서 "다음 회차에도 포함"을 선택하시면 자동으로 다음 추첨에 들어갑니다. 선택하지 않으시면 회차 종료 후 자료를 삭제하고, 원하실 때 다시 신청하시면 됩니다.</p>
+            <summary>If I'm not picked, do I have to apply again?</summary>
+            <p>In your confirmation email you can choose “keep me in future draws”, and you'll automatically be included next time. If you don't, we delete your materials when the round ends and you're welcome to apply again later.</p>
           </details>
           <details>
-            <summary>브랜드·기업도 참여할 수 있나요?</summary>
-            <p>의상 협찬, 도시·공간 협업, 캐릭터 라이선스 문의는 <a id="faqMail" href="#">이메일</a>로 보내주세요. 에피소드 안에 자연스럽게 녹이는 네이티브 협업을 함께 설계합니다.</p>
+            <summary>Can brands or companies take part?</summary>
+            <p>For clothing sponsorship, city or venue collaborations and character licensing, <a id="faqMail" href="#">email us</a>. We design native collaborations that fit naturally inside an episode.</p>
           </details>
         </div>
       </div>
@@ -509,10 +512,10 @@
         </div>
       </div>
       <div class="footer__info">
-        <p><b>주식회사 렉플</b> · THE PIT 제작팀</p>
-        <p>본 콘텐츠는 부산정보산업진흥원 주최 「2026 콘텐츠-테크 프로젝트 제작지원」 선정과제로 제작됩니다.</p>
-        <p><a href="privacy.html">개인정보처리방침</a> · <a href="#apply">주인공 신청</a></p>
-        <p class="footer__copy">© 2026 LECPLE Inc. All rights reserved. 골키(Golky)는 주식회사 렉플의 캐릭터입니다.</p>
+        <p><b>LECPLE Inc.</b> · THE PIT production team · Busan, South Korea</p>
+        <p>Produced as a selected project of the 2026 Content-Tech Project Production Support program, hosted by the Busan IT Industry Promotion Agency.</p>
+        <p><a href="privacy.html">Privacy Policy</a> · <a href="#apply">Apply</a></p>
+        <p class="footer__copy">© 2026 LECPLE Inc. All rights reserved. Golky is a character of LECPLE Inc.</p>
       </div>
     </div>
   </footer>

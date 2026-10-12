@@ -53,7 +53,7 @@
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => { URL.revokeObjectURL(url); res(img); };
-      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("이미지를 읽을 수 없습니다")); };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Couldn't read that image")); };
       img.src = url;
     });
   }
@@ -76,8 +76,8 @@
 
     async function setFile(file) {
       if (!file) return;
-      if (!file.type.startsWith("image/")) return note("이미지 파일만 올릴 수 있어요.");
-      if (file.size > MAX_MB * 1024 * 1024) return note(`사진 1장은 ${MAX_MB}MB 이하여야 해요.`);
+      if (!file.type.startsWith("image/")) return note("Only image files can be uploaded.");
+      if (file.size > MAX_MB * 1024 * 1024) return note(`Each photo must be ${MAX_MB}MB or smaller.`);
       try {
         const dataUrl = await resizeToDataUrl(file);
         photos[key] = { name: file.name, type: "image/jpeg", dataUrl };
@@ -115,8 +115,8 @@
       target.scrollIntoView({ behavior: "smooth", block: "center" });
       if (first.type !== "file" && first.type !== "radio") try { first.focus({ preventScroll: true }); } catch (_) {}
       const s = $("textarea[name=story]");
-      if (first === s && s.value.length < 100) return "이야기를 100자 이상 적어주세요. 지금 " + s.value.length + "자예요.";
-      return "별표(*) 항목을 모두 채워주세요.";
+      if (first === s && s.value.length < 100) return "Please write at least 100 characters for your story. You have " + s.value.length + " so far.";
+      return "Please fill in every field marked with *.";
     }
     return "";
   }
@@ -140,16 +140,16 @@
 
   function buildMailFallback(data) {
     const body = [
-      "[THE PIT 주인공 신청]", "",
-      `이름/닉네임: ${data.name}`, `이메일: ${data.email}`, `연락처: ${data.phone}`, `연령대: ${data.ageGroup}`,
-      `사는 곳: ${data.city}`, `SNS: ${data.sns}`, "",
-      `한 줄 소개: ${data.headline}`, `나의 색: ${data.color}`, `스타일: ${data.style}`, `장소: ${data.place}`, `골키에게: ${data.toGolky}`,
-      `키: ${data.height}`, `사이즈: ${data.size}`, "",
-      "나의 이야기:", data.story, "",
-      "※ 정면 얼굴 사진과 전신 사진을 이 메일에 첨부해 주세요.",
-      "※ 본인 사진 확인 / 초상권·캐릭터 제작 동의 / 개인정보 동의 / 만 14세 이상 확인: 동의함",
+      "[THE PIT application]", "",
+      `Name/nickname: ${data.name}`, `Email: ${data.email}`, `Country: ${data.country}`, `Age group: ${data.ageGroup}`,
+      `Social: ${data.sns}`, "",
+      `One-line intro: ${data.headline}`, `Color: ${data.color}`, `Style: ${data.style}`, `Place: ${data.place}`, `To Golky: ${data.toGolky}`,
+      `Height: ${data.height}`, `Size: ${data.size}`, "",
+      "My story:", data.story, "",
+      "* Please attach your face photo and full-body photo to this email.",
+      "* Confirmed: photos are of me / consent to character creation & publication / privacy policy / age 14+ (guardian consent if under 19)",
     ].join("\n");
-    return `mailto:${CFG.CONTACT_EMAIL}?subject=${encodeURIComponent("[THE PIT] 주인공 신청 - " + data.name)}&body=${encodeURIComponent(body)}`;
+    return `mailto:${CFG.CONTACT_EMAIL}?subject=${encodeURIComponent("[THE PIT] Application - " + data.name)}&body=${encodeURIComponent(body)}`;
   }
 
   form.addEventListener("submit", async e => {
@@ -160,11 +160,11 @@
     const data = collect();
 
     if (!CFG.SUBMIT_ENDPOINT) {
-      note(`온라인 접수 준비 중이에요. <a href="${buildMailFallback(data)}">이메일로 신청하기</a>를 눌러 사진 2장을 첨부해 보내주세요.`, true);
+      note(`Online submissions are almost ready. For now, <a href="${buildMailFallback(data)}">apply by email</a> and attach your two photos.`, true);
       return;
     }
 
-    submitBtn.disabled = true; submitBtn.textContent = "열쇠를 돌리는 중…"; note("");
+    submitBtn.disabled = true; submitBtn.textContent = "Turning the key…"; note("");
     try {
       const res = await fetch(CFG.SUBMIT_ENDPOINT, {
         method: "POST",
@@ -172,13 +172,13 @@
         body: JSON.stringify(data),
       });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok || out.ok === false) throw new Error(out.error || "서버 응답 오류");
+      if (!res.ok || out.ok === false) throw new Error(out.error || "server error");
       form.hidden = true; doneBox.hidden = false;
       doneBox.scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (err) {
-      note(`전송에 실패했어요 (${err.message}). 잠시 후 다시 시도하시거나 <a href="${buildMailFallback(data)}">이메일로 신청</a>해 주세요.`);
+      note(`Something went wrong (${err.message}). Please try again in a moment, or <a href="${buildMailFallback(data)}">apply by email</a>.`);
     } finally {
-      submitBtn.disabled = false; submitBtn.textContent = "🔑 열쇠 받기 · 신청 제출";
+      submitBtn.disabled = false; submitBtn.textContent = "🔑 Receive the key · Submit application";
     }
   });
 

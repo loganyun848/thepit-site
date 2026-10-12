@@ -21,7 +21,7 @@
   --err: #ff6b6b;
 
   --font-display: "Fraunces", "Pretendard Variable", Pretendard, serif;
-  --font-body: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
 
   --radius: 18px;
   --radius-sm: 10px;
@@ -40,7 +40,6 @@ body {
   background: var(--ink);
   line-height: 1.65;
   overflow-x: hidden;
-  word-break: keep-all;
 }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }

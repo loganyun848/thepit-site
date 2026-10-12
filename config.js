@@ -19,7 +19,7 @@ window.THEPIT_CONFIG = {
   CONTACT_EMAIL: "ceo@integree.io",
 
   // 이번 회차 안내 (상단 공지 띠에 표시, 비우면 숨김)
-  ROUND_NOTICE: "EP.1 주인공 모집 중 · 매 에피소드마다 신청자 중 1명을 무작위로 선정합니다",
+  ROUND_NOTICE: "EP.1 now casting · One applicant is picked at random every episode",
 
   // 사진 업로드 제한
   MAX_PHOTO_MB: 10,          // 원본 파일 1장당 최대 용량
