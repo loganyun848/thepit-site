@@ -33,6 +33,19 @@ gh repo create thepit-site --public --source=. --push
 1~2분 뒤 `https://<계정>.github.io/thepit-site/` 에서 열립니다.
 `.nojekyll` 파일이 있어 Jekyll 처리를 건너뜁니다.
 
+### 도메인: the-pit.site (Cloudflare Registrar)
+
+`CNAME` 파일에 `the-pit.site` 가 들어 있어 Pages가 자동으로 커스텀 도메인을 잡습니다.
+Cloudflare DNS 에는 아래 레코드가 있어야 합니다 (Proxy status: **DNS only**).
+
+| Type | Name | Content |
+|---|---|---|
+| A | @ | 185.199.108.153 |
+| A | @ | 185.199.109.153 |
+| A | @ | 185.199.110.153 |
+| A | @ | 185.199.111.153 |
+| CNAME | www | loganyun848.github.io |
+
 ## 3. 신청 접수 연결 (Google Apps Script, 무료)
 
 1. Google Sheets 새 문서 생성 → 메뉴 **확장 프로그램 → Apps Script**
