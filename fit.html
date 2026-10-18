@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fit Room · THE PIT</title>
+  <meta name="description" content="Upload one photo, get outfits picked for you, try them on, and check the fit size by size. Your photo never leaves your browser in demo mode." />
+  <meta property="og:title" content="Fit Room · THE PIT" />
+  <meta property="og:description" content="Upload a photo. Get outfits picked for you. See how they fit — size by size." />
+  <meta property="og:image" content="https://the-pit.site/assets/thumb-find-your-color.webp" />
+  <meta property="og:url" content="https://the-pit.site/fit.html" />
+  <link rel="canonical" href="https://the-pit.site/fit.html" />
+  <link rel="icon" href="assets/golky.webp" type="image/webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500;1,9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="fit.css" />
+</head>
+<body class="fit-page">
+
+  <!-- ───────── Navigation (index.html 과 동일, Fit Room 활성) ───────── -->
+  <header class="nav" id="nav">
+    <a href="index.html#top" class="nav__brand" aria-label="THE PIT home">
+      <img src="assets/golky.webp" alt="" class="nav__golky" />
+      <span class="nav__word">THE <em>PIT</em></span>
+    </a>
+    <nav class="nav__links" id="navLinks">
+      <a href="index.html#story">Story</a>
+      <a href="index.html#how">How it works</a>
+      <a href="index.html#characters">Cast</a>
+      <a href="index.html#episodes">Episodes</a>
+      <a href="fit.html" class="nav__active" aria-current="page">Fit Room</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="index.html#apply" class="btn btn--gold btn--sm">Apply</a>
+    </nav>
+    <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main id="top">
+
+    <!-- ───────── HERO ───────── -->
+    <section class="fit-hero">
+      <div class="container fit-hero__inner">
+        <p class="eyebrow">Fit Room · Powered by LECPLE Real-Fit</p>
+        <h1 class="fit-hero__title">One photo.<br />Outfits that <span class="gold">fit you</span>.</h1>
+        <p class="fit-hero__lead">
+          Upload a photo and your measurements. We pick looks for your body and tone,
+          let you try them on, and show how each size would actually fit.
+        </p>
+        <ol class="fit-steps" aria-label="How it works">
+          <li><b>1</b><span>Upload &amp; measure</span></li>
+          <li><b>2</b><span>Get picks</span></li>
+          <li><b>3</b><span>Try on</span></li>
+          <li><b>4</b><span>Check the fit</span></li>
+        </ol>
+        <p class="fit-hero__privacy" id="privacyLine">🔒 Demo mode — your photo is processed in your browser and never uploaded.</p>
+      </div>
+    </section>
+
+    <!-- ───────── STEP 1 · 업로드 + 치수 ───────── -->
+    <section class="section fit-section" id="step1">
+      <div class="container">
+        <div class="fit-grid">
+          <div class="fit-card">
+            <p class="eyebrow">Step 1 · Your photo</p>
+            <h2>Stand straight, face the camera.</h2>
+            <div class="upload fit-upload" id="photoUpload">
+              <input type="file" id="photoInput" accept="image/*" />
+              <label for="photoInput" class="upload__box">
+                <span class="upload__icon">📷</span>
+                <span class="upload__title">Drop a full-body photo <i>here</i></span>
+                <span class="upload__desc">JPG / PNG · plain background works best · max 10 MB</span>
+              </label>
+              <div class="upload__preview" id="photoPreview" hidden>
+                <img id="photoImg" alt="Your uploaded photo" />
+                <button type="button" class="upload__remove" id="photoRemove" aria-label="Remove photo">✕</button>
+              </div>
+            </div>
+            <div class="tone-read" id="toneRead" hidden>
+              <span class="tone-read__dot" id="toneDot"></span>
+              <span>Skin tone read: <b id="toneLabel">—</b> <small>(from your photo, adjustable below)</small></span>
+            </div>
+          </div>
+
+          <form class="fit-card" id="measureForm" novalidate>
+            <p class="eyebrow">Step 2 · Your measurements</p>
+            <h2>Numbers make the fit real.</h2>
+            <div class="row">
+              <div class="field">
+                <label class="field__label" for="height">Height <i>*</i> <small>cm</small></label>
+                <input type="number" id="height" name="height" inputmode="decimal" min="120" max="220" placeholder="168" required />
+              </div>
+              <div class="field">
+                <label class="field__label" for="weight">Weight <i>*</i> <small>kg</small></label>
+                <input type="number" id="weight" name="weight" inputmode="decimal" min="30" max="200" placeholder="56" required />
+              </div>
+            </div>
+            <div class="row row--3">
+              <div class="field">
+                <label class="field__label" for="chest">Chest <small>cm</small></label>
+                <input type="number" id="chest" name="chest" inputmode="decimal" min="60" max="150" placeholder="auto" />
+              </div>
+              <div class="field">
+                <label class="field__label" for="waist">Waist <small>cm</small></label>
+                <input type="number" id="waist" name="waist" inputmode="decimal" min="50" max="140" placeholder="auto" />
+              </div>
+              <div class="field">
+                <label class="field__label" for="hips">Hips <small>cm</small></label>
+                <input type="number" id="hips" name="hips" inputmode="decimal" min="60" max="160" placeholder="auto" />
+              </div>
+            </div>
+            <small class="fit-hint">Leave chest / waist / hips empty and we estimate them from height &amp; weight. Enter them for a real fit check.</small>
+
+            <div class="field">
+              <span class="field__label">Skin tone</span>
+              <div class="chips">
+                <label class="chip" style="--c:#e8b48a"><input type="radio" name="tone" value="warm" /><span>Warm</span></label>
+                <label class="chip" style="--c:#d9b3a3"><input type="radio" name="tone" value="neutral" checked /><span>Neutral</span></label>
+                <label class="chip" style="--c:#cfb3b8"><input type="radio" name="tone" value="cool" /><span>Cool</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <span class="field__label">I like my clothes</span>
+              <div class="chips chips--text">
+                <label class="chip"><input type="radio" name="pref" value="slim" /><span>Slim</span></label>
+                <label class="chip"><input type="radio" name="pref" value="regular" checked /><span>Regular</span></label>
+                <label class="chip"><input type="radio" name="pref" value="relaxed" /><span>Relaxed</span></label>
+                <label class="chip"><input type="radio" name="pref" value="oversized" /><span>Oversized</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <span class="field__label">Looking for</span>
+              <div class="chips chips--text">
+                <label class="chip"><input type="checkbox" name="cat" value="top" checked /><span>Tops</span></label>
+                <label class="chip"><input type="checkbox" name="cat" value="outer" checked /><span>Outerwear</span></label>
+                <label class="chip"><input type="checkbox" name="cat" value="bottom" checked /><span>Bottoms</span></label>
+                <label class="chip"><input type="checkbox" name="cat" value="dress" checked /><span>Dresses</span></label>
+              </div>
+            </div>
+            <p class="form__note" id="formNote"></p>
+            <button type="submit" class="btn btn--gold btn--lg btn--block" id="goBtn">🔑 Find my outfits</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── STEP 2 · 추천 ───────── -->
+    <section class="section fit-section fit-section--picks" id="picks" hidden>
+      <div class="container">
+        <p class="eyebrow">Step 3 · Your picks</p>
+        <h2>Picked for <span id="bodyLabel">you</span>.</h2>
+        <p class="sub" id="picksWhy"></p>
+        <div class="picks" id="picksGrid"></div>
+        <p class="fit-fine">Sample garments are brand-free illustrations. Partner-brand items appear here once connected.</p>
+      </div>
+    </section>
+
+    <!-- ───────── STEP 3 · 가상 착용 + 핏 ───────── -->
+    <section class="section fit-section fit-section--studio" id="studio" hidden>
+      <div class="container">
+        <div class="studio">
+          <div class="studio__stage">
+            <p class="eyebrow">Step 4 · Try it on</p>
+            <div class="stage-wrap">
+              <canvas id="stage" width="900" height="1200" aria-label="Try-on preview"></canvas>
+              <div class="stage__badge" id="stageBadge">Demo preview · drag to move · pinch or slider to resize</div>
+              <div class="stage__busy" id="stageBusy" hidden><span></span>Generating…</div>
+            </div>
+            <div class="stage__tools">
+              <label>Size <input type="range" id="scaleRange" min="0.4" max="1.6" step="0.01" value="1" /></label>
+              <label>Rotate <input type="range" id="rotRange" min="-20" max="20" step="0.5" value="0" /></label>
+              <button type="button" class="btn btn--ghost btn--sm" id="resetBtn">Reset</button>
+              <button type="button" class="btn btn--gold btn--sm" id="aiBtn" hidden>✨ AI try-on</button>
+              <button type="button" class="btn btn--ghost btn--sm" id="saveBtn">⬇ Save look</button>
+            </div>
+          </div>
+
+          <aside class="studio__side">
+            <div class="sel" id="selItem">
+              <img id="selImg" alt="" />
+              <div>
+                <p class="sel__brand" id="selBrand"></p>
+                <h3 id="selName">Pick an item</h3>
+                <p class="sel__meta" id="selMeta"></p>
+              </div>
+            </div>
+
+            <div class="fitcheck" id="fitcheck">
+              <p class="eyebrow">Fit check</p>
+              <p class="fitcheck__lead" id="fitLead">Select an item above to see how each size fits your measurements.</p>
+              <div class="fitcheck__sizes" id="fitSizes"></div>
+              <p class="fitcheck__est" id="fitEst" hidden>Chest / waist / hips were estimated from your height and weight. Enter real numbers in Step 2 for an exact fit.</p>
+            </div>
+
+            <div class="studio__cta">
+              <a href="index.html#apply" class="btn btn--ghost btn--block">Want to star in an episode? Apply →</a>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div>
+        <div class="footer__brand">THE <em>PIT</em></div>
+        <p class="footer__tag">Find your color.</p>
+        <div class="footer__social">
+          <a id="footYoutube" href="#" target="_blank" rel="noopener">YouTube</a>
+          <a id="footInsta" href="#" target="_blank" rel="noopener" hidden>Instagram</a>
+          <a id="footMail" href="#">Email</a>
+        </div>
+      </div>
+      <div class="footer__info">
+        <p><b>LECPLE Inc.</b> · THE PIT production team · Busan, South Korea</p>
+        <p>Fit Room runs on LECPLE's Real-Fit avatar engine — 150,000+ body measurements, 1,800 scanned actors, 51 measurement points.</p>
+        <p><a href="privacy.html">Privacy Policy</a> · <a href="index.html#apply">Apply</a></p>
+        <p class="footer__copy">© 2026 LECPLE Inc. All rights reserved. Golky is a character of LECPLE Inc.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="fit-catalog.js"></script>
+  <script src="fit.js"></script>
+</body>
+</html>

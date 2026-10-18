@@ -12,6 +12,8 @@
 | `app.js` | 내비, 스크롤 리빌, 사진 미리보기·리사이즈, 폼 검증·전송 |
 | `config.js` | **운영자가 수정하는 유일한 파일.** 접수 URL, 유튜브 링크, 공지 문구 |
 | `privacy.html` | 개인정보처리방침 |
+| `fit.html` / `fit.css` / `fit.js` | **Fit Room** — 사진 업로드 → 의상 추천 → 가상 착용 → 사이즈별 핏 체크 |
+| `fit-catalog.js` | Fit Room 의상 카탈로그 (브랜드 없는 샘플 SVG + 사이즈표). 협찬 브랜드 이미지로 교체하는 곳 |
 | `backend/Code.gs` | 신청 접수 백엔드 (Google Apps Script). 시트 저장 + 드라이브 사진 저장 + 확인 메일 + 랜덤 추첨 |
 | `assets/` | 배너, 썸네일, 골키 이미지 |
 
@@ -78,3 +80,31 @@ Apps Script 편집기에서 함수를 골라 ▶ 실행:
 - 유튜브 채널/예고편 주소: `config.js`
 - 에피소드 카드 추가: `index.html` 의 `#episodes` 섹션에서 카드 복사
 - 색상: `style.css` 상단 `:root` 변수
+
+
+## 5. Fit Room (fit.html)
+
+상단 메뉴 **Fit Room** 으로 들어가는 별도 페이지. 외부 라이브러리 없이 동작합니다.
+
+1. 사진 업로드 (브라우저 안에서 리사이즈 · 피부톤 자동 판독)
+2. 키·몸무게 (+ 가슴·허리·엉덩이 선택) → 체형 분류
+3. 체형·톤·계절·선호 핏으로 카탈로그에서 8벌 추천
+4. 캔버스 위에서 의상을 드래그·확대해 보는 데모 가상 착용
+5. 선택한 옷의 사이즈별 핏 체크 (S/M/L/XL 마다 Good fit · Snug · Too tight · Roomy · Loose)
+
+### 의상 바꾸기
+`fit-catalog.js` 의 `ITEMS` 배열이 전부입니다. 항목마다
+- `image`: 사진 URL (지정하면 SVG 대신 그 사진을 씀) — 협찬 브랜드 이미지는 여기에
+- `brand`: 브랜드명
+- `sizes`: 각 사이즈가 맞는 **몸 둘레 범위**(cm). 상의는 `chest`, 하의는 `waist`·`hips`, 원피스는 `chest`·`waist`
+- `tone` / `season` / `fit` / `body`: 추천 점수에 쓰는 태그
+
+> 유니클로·자라 등 타사 공식몰 이미지를 직접 긁어 넣지 마세요. 저작권·약관 문제가 됩니다.
+> 협찬 브랜드에서 받은 이미지, 또는 제휴 프로그램(무신사 파트너스 등)이 허용하는 이미지만 사용합니다.
+
+### 진짜 AI 가상 착용 붙이기
+`config.js` 의 `TRYON_ENDPOINT` 에 서버 URL 을 넣으면 스튜디오에 **AI try-on** 버튼이 생깁니다.
+- 요청: `POST` JSON `{ photo, garment, category, item }` (photo·garment 는 dataURL)
+- 응답: `{ "image": "<dataURL 또는 https URL>" }`
+서버 쪽에서 Kling · fal.ai(IDM-VTON 계열) · 힉스필드 등 어떤 VTON API 를 써도 되고, 이 규격만 맞추면 프런트는 그대로입니다.
+엔드포인트가 비어 있으면 사진은 어디로도 전송되지 않습니다(데모 모드 문구가 자동으로 표시됨).
