@@ -21,10 +21,6 @@ window.THEPIT_CONFIG = {
   // 이번 회차 안내 (상단 공지 띠에 표시, 비우면 숨김)
   ROUND_NOTICE: "EP.1 now casting · One applicant is picked at random every episode",
 
-  // Fit Room — AI 가상 착용 서버 (비워 두면 브라우저 안에서만 동작하는 데모 모드)
-  // POST JSON { photo, garment, category, item } → 응답 { image: dataURL 또는 https URL }
-  TRYON_ENDPOINT: "",
-
   // 사진 업로드 제한
   MAX_PHOTO_MB: 10,          // 원본 파일 1장당 최대 용량
   RESIZE_MAX_PX: 1600        // 업로드 전 긴 변 기준 리사이즈 (전송 용량 절약)

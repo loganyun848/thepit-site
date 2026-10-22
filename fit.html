@@ -1,232 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fit Room · THE PIT</title>
-  <meta name="description" content="Upload one photo, get outfits picked for you, try them on, and check the fit size by size. Your photo never leaves your browser in demo mode." />
-  <meta property="og:title" content="Fit Room · THE PIT" />
-  <meta property="og:description" content="Upload a photo. Get outfits picked for you. See how they fit — size by size." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fit Room · 나에게 맞는 사이즈 · THE PIT</title>
+  <meta name="description" content="사진과 신체 치수를 입력하고 유니클로·자라의 여성복 또는 남성복을 각각 20개씩 살펴보세요. 옷을 고르면 추천 사이즈를 알려드립니다." />
+  <meta property="og:title" content="Fit Room · 나에게 맞는 사이즈" />
+  <meta property="og:description" content="UNIQLO 20 · ZARA 20. 마음에 드는 옷을 고르면, 내 몸에 맞는 사이즈를." />
   <meta property="og:image" content="https://the-pit.site/assets/thumb-find-your-color.webp" />
-  <meta property="og:url" content="https://the-pit.site/fit.html" />
   <link rel="canonical" href="https://the-pit.site/fit.html" />
   <link rel="icon" href="assets/golky.webp" type="image/webp" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500;1,9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="fit.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" /><link rel="stylesheet" href="fit.css?v=20261022" />
 </head>
 <body class="fit-page">
-
-  <!-- ───────── Navigation (index.html 과 동일, Fit Room 활성) ───────── -->
   <header class="nav" id="nav">
-    <a href="index.html#top" class="nav__brand" aria-label="THE PIT home">
-      <img src="assets/golky.webp" alt="" class="nav__golky" />
-      <span class="nav__word">THE <em>PIT</em></span>
-    </a>
-    <nav class="nav__links" id="navLinks">
-      <a href="index.html#story">Story</a>
-      <a href="index.html#how">How it works</a>
-      <a href="index.html#characters">Cast</a>
-      <a href="index.html#episodes">Episodes</a>
-      <a href="fit.html" class="nav__active" aria-current="page">Fit Room</a>
-      <a href="index.html#faq">FAQ</a>
-      <a href="index.html#apply" class="btn btn--gold btn--sm">Apply</a>
-    </nav>
-    <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
+    <a href="index.html#top" class="nav__brand" aria-label="THE PIT 홈"><img src="assets/golky.webp" alt="" class="nav__golky" /><span class="nav__word">THE <em>PIT</em></span></a>
+    <nav class="nav__links" id="navLinks" aria-label="주 메뉴"><a href="index.html#story">Story</a><a href="index.html#how">How it works</a><a href="index.html#characters">Cast</a><a href="index.html#episodes">Episodes</a><a href="fit.html" class="nav__active" aria-current="page">Fit Room</a><a href="index.html#faq">FAQ</a><a href="index.html#apply" class="btn btn--gold btn--sm">Apply</a></nav>
+    <button class="nav__toggle" id="navToggle" aria-label="메뉴 열기" aria-expanded="false" aria-controls="navLinks"><span></span><span></span><span></span></button>
   </header>
-
   <main id="top">
-
-    <!-- ───────── HERO ───────── -->
-    <section class="fit-hero">
-      <div class="container fit-hero__inner">
-        <p class="eyebrow">Fit Room · Powered by LECPLE Real-Fit</p>
-        <h1 class="fit-hero__title">One photo.<br />Outfits that <span class="gold">fit you</span>.</h1>
-        <p class="fit-hero__lead">
-          Upload a photo and your measurements. We pick looks for your body and tone,
-          let you try them on, and show how each size would actually fit.
-        </p>
-        <ol class="fit-steps" aria-label="How it works">
-          <li><b>1</b><span>Upload &amp; measure</span></li>
-          <li><b>2</b><span>Get picks</span></li>
-          <li><b>3</b><span>Try on</span></li>
-          <li><b>4</b><span>Check the fit</span></li>
-        </ol>
-        <p class="fit-hero__privacy" id="privacyLine">🔒 Demo mode — your photo is processed in your browser and never uploaded.</p>
-      </div>
-    </section>
-
-    <!-- ───────── STEP 1 · 업로드 + 치수 ───────── -->
-    <section class="section fit-section" id="step1">
-      <div class="container">
-        <div class="fit-grid">
-          <div class="fit-card">
-            <p class="eyebrow">Step 1 · Your photo</p>
-            <h2>Stand straight, face the camera.</h2>
-            <div class="upload fit-upload" id="photoUpload">
-              <input type="file" id="photoInput" accept="image/*" />
-              <label for="photoInput" class="upload__box">
-                <span class="upload__icon">📷</span>
-                <span class="upload__title">Drop a full-body photo <i>here</i></span>
-                <span class="upload__desc">JPG / PNG · plain background works best · max 10 MB</span>
-              </label>
-              <div class="upload__preview" id="photoPreview" hidden>
-                <img id="photoImg" alt="Your uploaded photo" />
-                <button type="button" class="upload__remove" id="photoRemove" aria-label="Remove photo">✕</button>
-              </div>
-            </div>
-            <div class="tone-read" id="toneRead" hidden>
-              <span class="tone-read__dot" id="toneDot"></span>
-              <span>Skin tone read: <b id="toneLabel">—</b> <small>(from your photo, adjustable below)</small></span>
-            </div>
-          </div>
-
-          <form class="fit-card" id="measureForm" novalidate>
-            <p class="eyebrow">Step 2 · Your measurements</p>
-            <h2>Numbers make the fit real.</h2>
-            <div class="row">
-              <div class="field">
-                <label class="field__label" for="height">Height <i>*</i> <small>cm</small></label>
-                <input type="number" id="height" name="height" inputmode="decimal" min="120" max="220" placeholder="168" required />
-              </div>
-              <div class="field">
-                <label class="field__label" for="weight">Weight <i>*</i> <small>kg</small></label>
-                <input type="number" id="weight" name="weight" inputmode="decimal" min="30" max="200" placeholder="56" required />
-              </div>
-            </div>
-            <div class="row row--3">
-              <div class="field">
-                <label class="field__label" for="chest">Chest <small>cm</small></label>
-                <input type="number" id="chest" name="chest" inputmode="decimal" min="60" max="150" placeholder="auto" />
-              </div>
-              <div class="field">
-                <label class="field__label" for="waist">Waist <small>cm</small></label>
-                <input type="number" id="waist" name="waist" inputmode="decimal" min="50" max="140" placeholder="auto" />
-              </div>
-              <div class="field">
-                <label class="field__label" for="hips">Hips <small>cm</small></label>
-                <input type="number" id="hips" name="hips" inputmode="decimal" min="60" max="160" placeholder="auto" />
-              </div>
-            </div>
-            <small class="fit-hint">Leave chest / waist / hips empty and we estimate them from height &amp; weight. Enter them for a real fit check.</small>
-
-            <div class="field">
-              <span class="field__label">Skin tone</span>
-              <div class="chips">
-                <label class="chip" style="--c:#e8b48a"><input type="radio" name="tone" value="warm" /><span>Warm</span></label>
-                <label class="chip" style="--c:#d9b3a3"><input type="radio" name="tone" value="neutral" checked /><span>Neutral</span></label>
-                <label class="chip" style="--c:#cfb3b8"><input type="radio" name="tone" value="cool" /><span>Cool</span></label>
-              </div>
-            </div>
-            <div class="field">
-              <span class="field__label">I like my clothes</span>
-              <div class="chips chips--text">
-                <label class="chip"><input type="radio" name="pref" value="slim" /><span>Slim</span></label>
-                <label class="chip"><input type="radio" name="pref" value="regular" checked /><span>Regular</span></label>
-                <label class="chip"><input type="radio" name="pref" value="relaxed" /><span>Relaxed</span></label>
-                <label class="chip"><input type="radio" name="pref" value="oversized" /><span>Oversized</span></label>
-              </div>
-            </div>
-            <div class="field">
-              <span class="field__label">Looking for</span>
-              <div class="chips chips--text">
-                <label class="chip"><input type="checkbox" name="cat" value="top" checked /><span>Tops</span></label>
-                <label class="chip"><input type="checkbox" name="cat" value="outer" checked /><span>Outerwear</span></label>
-                <label class="chip"><input type="checkbox" name="cat" value="bottom" checked /><span>Bottoms</span></label>
-                <label class="chip"><input type="checkbox" name="cat" value="dress" checked /><span>Dresses</span></label>
-              </div>
-            </div>
-            <p class="form__note" id="formNote"></p>
-            <button type="submit" class="btn btn--gold btn--lg btn--block" id="goBtn">🔑 Find my outfits</button>
-          </form>
+    <section class="fit-hero"><div class="container fit-hero__inner"><div>
+      <p class="eyebrow">THE PIT / PERSONAL SIZE GUIDE</p><h1>마음에 드는 옷.<br /><span class="gold">나에게 맞는 사이즈.</span></h1>
+      <p class="fit-hero__lead">사진과 신체 치수를 입력하세요.<br />유니클로와 자라에서 옷을 고르면, 추천 사이즈를 알려드릴게요.</p>
+      <ol class="fit-steps" aria-label="이용 순서"><li><b>01</b> 사진과 치수</li><li><b>02</b> 브랜드별 20개</li><li><b>03</b> 내 사이즈 확인</li></ol>
+    </div><div class="brand-pair" aria-label="유니클로 20개, 자라 20개"><div><span class="brand-word brand-word--uniqlo">UNI<br />QLO</span><span>20 pieces</span></div><span class="brand-pair__plus">＋</span><div><span class="brand-word brand-word--zara">ZARA</span><span>20 pieces</span></div></div></div></section>
+    <section class="fit-section container" id="measurements" aria-labelledby="measureTitle">
+      <div class="section-heading"><p class="eyebrow">01 / YOUR PROFILE</p><h2 id="measureTitle">먼저, 당신을 알려주세요.</h2><p>사진은 미리보기용입니다. 사이즈는 입력한 신체 치수로 계산합니다.</p></div>
+      <div class="fit-grid">
+        <div class="fit-card photo-card"><div class="photo-card__heading"><h3>내 사진</h3><span class="privacy-tag">내 브라우저에만 보관</span></div>
+          <div class="photo-upload" id="photoUpload"><input type="file" id="photoInput" aria-label="내 사진 선택" accept="image/jpeg,image/png,image/webp" /><label for="photoInput" id="photoLabel"><span class="photo-icon" aria-hidden="true">＋</span><strong>사진을 선택하거나 끌어 놓으세요</strong><span>JPG · PNG · WEBP / 최대 10 MB</span></label><div class="photo-preview" id="photoPreview" hidden><img id="photoImg" alt="내 사진 미리보기" /><button type="button" id="photoRemove" aria-label="사진 삭제">×</button></div></div>
+          <p class="fit-hint" id="photoStatus" role="status">사진과 신체 치수는 서버로 전송하거나 저장하지 않습니다.</p>
         </div>
-      </div>
-    </section>
-
-    <!-- ───────── STEP 2 · 추천 ───────── -->
-    <section class="section fit-section fit-section--picks" id="picks" hidden>
-      <div class="container">
-        <p class="eyebrow">Step 3 · Your picks</p>
-        <h2>Picked for <span id="bodyLabel">you</span>.</h2>
-        <p class="sub" id="picksWhy"></p>
-        <div class="picks" id="picksGrid"></div>
-        <p class="fit-fine">Sample garments are brand-free illustrations. Partner-brand items appear here once connected.</p>
-      </div>
-    </section>
-
-    <!-- ───────── STEP 3 · 가상 착용 + 핏 ───────── -->
-    <section class="section fit-section fit-section--studio" id="studio" hidden>
-      <div class="container">
-        <div class="studio">
-          <div class="studio__stage">
-            <p class="eyebrow">Step 4 · Try it on</p>
-            <div class="stage-wrap">
-              <canvas id="stage" width="900" height="1200" aria-label="Try-on preview"></canvas>
-              <div class="stage__badge" id="stageBadge">Demo preview · drag to move · pinch or slider to resize</div>
-              <div class="stage__busy" id="stageBusy" hidden><span></span>Generating…</div>
-            </div>
-            <div class="stage__tools">
-              <label>Size <input type="range" id="scaleRange" min="0.4" max="1.6" step="0.01" value="1" /></label>
-              <label>Rotate <input type="range" id="rotRange" min="-20" max="20" step="0.5" value="0" /></label>
-              <button type="button" class="btn btn--ghost btn--sm" id="resetBtn">Reset</button>
-              <button type="button" class="btn btn--gold btn--sm" id="aiBtn" hidden>✨ AI try-on</button>
-              <button type="button" class="btn btn--ghost btn--sm" id="saveBtn">⬇ Save look</button>
-            </div>
+        <form class="fit-card" id="measureForm" novalidate>
+          <fieldset class="gender-field"><legend>어떤 옷을 찾으세요? <span class="required">필수</span></legend><div class="gender-options"><label><input type="radio" name="gender" value="women" required /><span>여성복 <small>WOMEN</small></span></label><label><input type="radio" name="gender" value="men" required /><span>남성복 <small>MEN</small></span></label></div></fieldset>
+          <div class="measure-row"><div class="field"><label for="height">키 <span class="required">필수</span></label><div class="unit-field"><input id="height" name="height" type="number" min="120" max="220" step="0.1" inputmode="decimal" placeholder="168" required /><span>cm</span></div></div><div class="field"><label for="weight">몸무게 <span class="required">필수</span></label><div class="unit-field"><input id="weight" name="weight" type="number" min="30" max="220" step="0.1" inputmode="decimal" placeholder="56" required /><span>kg</span></div></div></div>
+          <div class="measure-divider"><strong>둘레를 알면 더 정확해져요</strong><span>선택 입력</span></div>
+          <div class="measure-row measure-row--three">
+            <div class="field"><label for="chest">가슴둘레</label><div class="unit-field"><input id="chest" name="chest" type="number" min="50" max="200" step="0.1" inputmode="decimal" placeholder="자동 추정" /><span>cm</span></div></div>
+            <div class="field"><label for="waist">허리둘레</label><div class="unit-field"><input id="waist" name="waist" type="number" min="40" max="200" step="0.1" inputmode="decimal" placeholder="자동 추정" /><span>cm</span></div></div>
+            <div class="field"><label for="hips">엉덩이둘레</label><div class="unit-field"><input id="hips" name="hips" type="number" min="50" max="200" step="0.1" inputmode="decimal" placeholder="자동 추정" /><span>cm</span></div></div>
           </div>
-
-          <aside class="studio__side">
-            <div class="sel" id="selItem">
-              <img id="selImg" alt="" />
-              <div>
-                <p class="sel__brand" id="selBrand"></p>
-                <h3 id="selName">Pick an item</h3>
-                <p class="sel__meta" id="selMeta"></p>
-              </div>
-            </div>
-
-            <div class="fitcheck" id="fitcheck">
-              <p class="eyebrow">Fit check</p>
-              <p class="fitcheck__lead" id="fitLead">Select an item above to see how each size fits your measurements.</p>
-              <div class="fitcheck__sizes" id="fitSizes"></div>
-              <p class="fitcheck__est" id="fitEst" hidden>Chest / waist / hips were estimated from your height and weight. Enter real numbers in Step 2 for an exact fit.</p>
-            </div>
-
-            <div class="studio__cta">
-              <a href="index.html#apply" class="btn btn--ghost btn--block">Want to star in an episode? Apply →</a>
-            </div>
-          </aside>
-        </div>
+          <p class="fit-hint">비워 둔 둘레는 키·몸무게로 추정합니다. 줄자로 잰 몸 둘레를 cm로 입력해 주세요.</p>
+          <details class="measure-help"><summary>어디를 재면 되나요?</summary><p>가슴은 가장 볼륨이 있는 부분, 허리는 가장 잘록한 부분, 엉덩이는 가장 넓은 부분을 수평으로 한 바퀴 재세요. 옷의 단면 길이가 아닌 신체 둘레입니다.</p></details>
+          <p id="formNote" class="form-note" role="alert"></p><button class="btn btn--gold btn--block" type="submit" id="goBtn">나에게 맞는 옷 40개 보기 <span aria-hidden="true">↗</span></button>
+        </form>
       </div>
     </section>
-
+    <section class="fit-results fit-section" id="picks" hidden aria-labelledby="picksTitle"><div class="container">
+      <div class="results-heading"><div><p class="eyebrow">02 / FIND YOUR PIECE</p><h2 id="picksTitle" tabindex="-1">두 브랜드, 나만의 선택.</h2><p id="profileSummary"></p></div><a class="edit-profile" href="#measurements">내 정보 수정 ↗</a></div><p class="profile-note" id="estimateNote"></p>
+      <div class="catalog-toolbar"><div class="brand-filters" role="group" aria-label="브랜드 필터"><button type="button" data-brand="all" aria-pressed="true">전체 <b>40</b></button><button type="button" data-brand="UNIQLO" aria-pressed="false">UNIQLO <b>20</b></button><button type="button" data-brand="ZARA" aria-pressed="false">ZARA <b>20</b></button></div><label class="category-filter">종류 <select id="categoryFilter"><option value="all">전체 의류</option><option value="top">상의</option><option value="outer">아우터</option><option value="bottom">하의</option></select></label></div>
+      <p class="result-count" id="resultCount" role="status" aria-live="polite"></p><div id="picksGrid"></div><p class="empty-results" id="emptyResults" hidden>이 조건의 상품이 없습니다. 다른 브랜드나 종류를 선택해 주세요.</p>
+      <p class="catalog-note">공식몰 상품 사진 · <span id="catalogDate"></span> 확인 기준. 가격과 재고는 공식몰에서 달라질 수 있습니다.<br />사이즈 추천은 입력 치수와 사이즈표를 비교한 참고 정보이며, 소재·디자인에 따른 착용감은 다를 수 있습니다.</p>
+    </div></section>
+    <dialog id="sizeDialog" aria-labelledby="selName"><button type="button" class="dialog-close" id="closeDialog" aria-label="사이즈 안내 닫기" autofocus>×</button><div class="size-detail">
+      <div class="detail-photo"><img id="selImg" alt="" referrerpolicy="no-referrer" /><p id="detailImageError" hidden>사진을 불러오지 못했습니다. 공식몰에서 상품 사진을 확인해 주세요.</p></div>
+      <div class="detail-info"><p class="eyebrow" id="selBrand"></p><h2 id="selName"></h2><p id="selMeta"></p><div class="size-answer" id="sizeAnswer"><p id="recommendLabel"></p><strong id="recommendedSize"></strong><p id="recommendReason"></p></div><p class="fit-hint" id="sizeBasis"></p>
+        <a class="size-source" id="sizeSource" target="_blank" rel="noopener noreferrer">사이즈 기준 출처 ↗</a><div class="size-table-wrap"><table id="fitTable"><caption>내 치수와 사이즈별 비교 (cm)</caption><thead id="fitHead"></thead><tbody id="fitRows"></tbody></table></div><p class="fit-hint" id="fitCaution"></p><a class="btn btn--gold btn--block" id="shopLink" target="_blank" rel="noopener noreferrer">공식몰에서 상품 보기 ↗</a><button type="button" class="detail-edit" id="editMeasurements">내 치수 다시 입력하기</button>
+      </div></div>
+    </dialog>
   </main>
-
-  <footer class="footer">
-    <div class="container footer__grid">
-      <div>
-        <div class="footer__brand">THE <em>PIT</em></div>
-        <p class="footer__tag">Find your color.</p>
-        <div class="footer__social">
-          <a id="footYoutube" href="#" target="_blank" rel="noopener">YouTube</a>
-          <a id="footInsta" href="#" target="_blank" rel="noopener" hidden>Instagram</a>
-          <a id="footMail" href="#">Email</a>
-        </div>
-      </div>
-      <div class="footer__info">
-        <p><b>LECPLE Inc.</b> · THE PIT production team · Busan, South Korea</p>
-        <p>Fit Room runs on LECPLE's Real-Fit avatar engine — 150,000+ body measurements, 1,800 scanned actors, 51 measurement points.</p>
-        <p><a href="privacy.html">Privacy Policy</a> · <a href="index.html#apply">Apply</a></p>
-        <p class="footer__copy">© 2026 LECPLE Inc. All rights reserved. Golky is a character of LECPLE Inc.</p>
-      </div>
-    </div>
-  </footer>
-
-  <script src="config.js"></script>
-  <script src="fit-catalog.js"></script>
-  <script src="fit.js"></script>
+  <footer class="footer"><div class="container footer__grid"><div><div class="footer__brand">THE <em>PIT</em></div><p class="footer__tag">Find your color. Find your fit.</p><div class="footer__social"><a id="footYoutube" target="_blank" rel="noopener">YouTube</a><a id="footMail">Email</a></div></div><div class="footer__info"><p><b>LECPLE Inc.</b> · THE PIT production team</p><p>Fit Room의 독립적인 사이즈 안내 서비스입니다.<br />UNIQLO·ZARA의 공식 제휴 서비스가 아닙니다.</p><p><a href="privacy.html">개인정보처리방침</a> · <a href="index.html">홈으로</a></p><p class="footer__copy">© 2026 LECPLE Inc.</p></div></div></footer>
+  <noscript><p class="container">Fit Room을 이용하려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
+  <script src="config.js"></script><script src="fit-catalog.js?v=20261022"></script><script src="fit-sizing.js?v=20261022"></script><script src="fit.js?v=20261022"></script>
 </body>
 </html>

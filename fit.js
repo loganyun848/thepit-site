@@ -1,234 +1,138 @@
-/* THE PIT — Fit Room 동작 (외부 라이브러리 없음)
-   흐름: 사진 업로드 → 치수 → 추천 → 캔버스 가상 착용(데모) → 사이즈별 핏 체크
-   실제 AI 가상 착용은 config.js 의 TRYON_ENDPOINT 가 설정되면 자동으로 켜집니다. */
+/* Fit Room: local photo/profile → 20 products per brand → automatic size. */
 (function () {
   "use strict";
-  const CFG = window.THEPIT_CONFIG || {};
-  const CAT = window.FIT_CATALOG;
-  const $ = (s, el = document) => el.querySelector(s);
-  const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
-
-  /* ── 공통: 내비 · 푸터 ── */
-  const toggle = $("#navToggle"), links = $("#navLinks");
-  toggle.addEventListener("click", () => { const o = links.classList.toggle("open"); toggle.setAttribute("aria-expanded", String(o)); });
-  const yt = CFG.YOUTUBE_CHANNEL_URL || "#";
-  $("#footYoutube").href = yt;
-  if (CFG.INSTAGRAM_URL) { const a = $("#footInsta"); a.href = CFG.INSTAGRAM_URL; a.hidden = false; }
-  $("#footMail").href = "mailto:" + (CFG.CONTACT_EMAIL || "");
-  const LIVE = !!CFG.TRYON_ENDPOINT;
-  if (LIVE) { const p = $("#privacyLine"); p.textContent = "✨ AI try-on enabled — photos are sent to our try-on server only when you press “AI try-on”."; p.classList.add("live"); $("#aiBtn").hidden = false; }
-
-  /* ── 상태 ── */
-  const state = { photo: null, photoW: 0, photoH: 0, user: null, picks: [], sel: null, g: { x: .5, y: .36, s: 1, r: 0 }, gImg: null, aiImg: null };
-
-  /* ── 1. 사진 업로드 ── */
-  const up = $("#photoUpload"), input = $("#photoInput"), prev = $("#photoPreview"), pimg = $("#photoImg");
-  ["dragenter", "dragover"].forEach(ev => up.addEventListener(ev, e => { e.preventDefault(); up.classList.add("drag"); }));
-  ["dragleave", "drop"].forEach(ev => up.addEventListener(ev, e => { e.preventDefault(); up.classList.remove("drag"); }));
-  up.addEventListener("drop", e => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadPhoto(f); });
-  input.addEventListener("change", () => { if (input.files[0]) loadPhoto(input.files[0]); });
-  $("#photoRemove").addEventListener("click", () => { state.photo = null; state.aiImg = null; input.value = ""; prev.hidden = true; up.classList.remove("has-file"); $("#toneRead").hidden = true; draw(); });
-
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const CFG = window.THEPIT_CONFIG || {}, ENGINE = window.FIT_SIZING, CATALOG = window.FIT_CATALOG;
+  const state = { photo: null, photoLoading: false, uploadVersion: 0, user: null, items: [], brand: "all", category: "all", selected: null };
+  const genderName = g => g === "women" ? "여성복" : "남성복";
+  const cats = { top: "상의", outer: "아우터", bottom: "하의" };
+  const money = n => `${n.toLocaleString("ko-KR")}원`;
+  const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const note = m => { $("#formNote").textContent = m; };
+  const dialog = $("#sizeDialog"), form = $("#measureForm"), upload = $("#photoUpload"), input = $("#photoInput");
+  $("#navToggle").addEventListener("click", () => { const open = $("#navLinks").classList.toggle("open"); $("#navToggle").setAttribute("aria-expanded", String(open)); });
+  $("#footYoutube").href = CFG.YOUTUBE_CHANNEL_URL || "index.html";
+  $("#footMail").href = `mailto:${CFG.CONTACT_EMAIL || "marketing@lecple.com"}`;
+  $("#catalogDate").textContent = CATALOG?.updatedAt || "";
+  function invalidate() {
+    if (state.user) note("정보가 바뀌었습니다. 아래 버튼을 눌러 사이즈를 다시 확인해 주세요.");
+    state.user = null; state.selected = null; state.items = [];
+    $("#picks").hidden = true; $("#picksGrid").replaceChildren();
+    if (dialog.open) dialog.close();
+  }
+  form.addEventListener("input", invalidate);
   function loadPhoto(file) {
-    if (!file.type.startsWith("image/")) return note("Please choose an image file.");
-    if (file.size > (CFG.MAX_PHOTO_MB || 10) * 1024 * 1024) return note(`Photo is over ${CFG.MAX_PHOTO_MB || 10} MB.`);
-    const url = URL.createObjectURL(file);
-    const im = new Image();
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { note("JPG, PNG 또는 WEBP 사진을 선택해 주세요."); input.value = ""; return; }
+    if (!file.size || file.size > (CFG.MAX_PHOTO_MB || 10) * 1024 * 1024) { note("사진은 0 MB 초과, 10 MB 이하로 선택해 주세요."); input.value = ""; return; }
+    const version = ++state.uploadVersion, url = URL.createObjectURL(file), im = new Image();
+    state.photoLoading = true; $("#goBtn").disabled = true; $("#photoStatus").textContent = "사진을 확인하고 있습니다…";
+    function finish() { state.photoLoading = false; $("#goBtn").disabled = false; }
     im.onload = () => {
-      const max = CFG.RESIZE_MAX_PX || 1600, k = Math.min(1, max / Math.max(im.width, im.height));
-      const c = document.createElement("canvas"); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
-      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
-      const out = new Image();
-      out.onload = () => { state.photo = out; state.photoW = out.width; state.photoH = out.height; state.aiImg = null; pimg.src = out.src; prev.hidden = false; up.classList.add("has-file"); readTone(c); draw(); };
-      out.src = c.toDataURL("image/jpeg", .9);
-      URL.revokeObjectURL(url);
+      if (version !== state.uploadVersion) { URL.revokeObjectURL(url); return; }
+      finish(); invalidate();
+      if (state.photo) URL.revokeObjectURL(state.photo);
+      state.photo = url; $("#photoImg").src = url; $("#photoPreview").hidden = false; $("#photoLabel").hidden = true;
+      $("#photoStatus").textContent = "사진 준비 완료 · 사진과 신체 치수는 서버로 전송하지 않습니다.";
+      note("");
+    };
+    im.onerror = () => {
+      URL.revokeObjectURL(url); if (version !== state.uploadVersion) return;
+      finish(); input.value = ""; note("사진을 읽을 수 없습니다. 다른 JPG·PNG·WEBP 파일을 선택해 주세요.");
+      $("#photoStatus").textContent = state.photo ? "이전에 선택한 사진을 유지합니다." : "사진을 다시 선택해 주세요.";
     };
     im.src = url;
   }
-
-  /* 피부톤 추정: 사진 상단 중앙(얼굴 예상 영역)에서 피부색 픽셀만 평균 */
-  function readTone(c) {
-    const ctx = c.getContext("2d"), W = c.width, H = c.height;
-    const x0 = Math.round(W * .3), y0 = Math.round(H * .05), w = Math.round(W * .4), h = Math.round(H * .3);
-    const d = ctx.getImageData(x0, y0, w, h).data;
-    let r = 0, g = 0, b = 0, n = 0;
-    for (let i = 0; i < d.length; i += 16) {
-      const R = d[i], G = d[i + 1], B = d[i + 2];
-      if (R > 95 && G > 40 && B > 20 && R > G && R > B && (R - Math.min(G, B)) > 15 && Math.abs(R - G) > 15) { r += R; g += G; b += B; n++; }
-    }
-    const box = $("#toneRead"), dot = $("#toneDot"), lab = $("#toneLabel");
-    if (n < 40) { box.hidden = true; return; }
-    r /= n; g /= n; b /= n;
-    const under = (r + g) / 2 - b;           // 황색 기운이 클수록 warm
-    const tone = under > 62 ? "warm" : under < 42 ? "cool" : "neutral";
-    dot.style.background = `rgb(${r | 0},${g | 0},${b | 0})`;
-    lab.textContent = tone[0].toUpperCase() + tone.slice(1);
-    box.hidden = false;
-    const radio = $(`input[name=tone][value=${tone}]`); if (radio) radio.checked = true;
-  }
-
-  /* ── 2. 치수 → 체형 ── */
-  const form = $("#measureForm");
-  const note = (m, ok) => { const n = $("#formNote"); n.textContent = m || ""; n.classList.toggle("ok", !!ok); };
+  input.addEventListener("change", () => { if (input.files[0]) loadPhoto(input.files[0]); });
+  ["dragenter", "dragover"].forEach(type => upload.addEventListener(type, e => { e.preventDefault(); upload.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(type => upload.addEventListener(type, e => { e.preventDefault(); upload.classList.remove("drag"); }));
+  upload.addEventListener("drop", e => { if (e.dataTransfer.files[0]) loadPhoto(e.dataTransfer.files[0]); });
+  $("#photoRemove").addEventListener("click", () => {
+    ++state.uploadVersion; if (state.photo) URL.revokeObjectURL(state.photo);
+    state.photo = null; state.photoLoading = false; $("#goBtn").disabled = false; input.value = "";
+    $("#photoImg").removeAttribute("src"); $("#photoPreview").hidden = true; $("#photoLabel").hidden = false;
+    $("#photoStatus").textContent = "사진이 삭제되었습니다. 새 사진을 선택해 주세요.";
+    invalidate(); note(""); input.focus();
+  });
   form.addEventListener("submit", e => {
-    e.preventDefault();
-    const h = +form.height.value, w = +form.weight.value;
-    if (!h || !w) return note("Height and weight are needed to size you.");
-    if (!state.photo) return note("Add a photo first — we use it for the try-on and your tone.");
-    const bmi = w / ((h / 100) ** 2);
-    const est = {};
-    let chest = +form.chest.value || (est.chest = true, Math.round(86 + (bmi - 21) * 2.2 + (h - 168) * .25));
-    let waist = +form.waist.value || (est.waist = true, Math.round(72 + (bmi - 21) * 2.6 + (h - 168) * .15));
-    let hips  = +form.hips.value  || (est.hips  = true, Math.round(92 + (bmi - 21) * 2.0 + (h - 168) * .2));
-    let body = bmi < 19.5 ? "slim" : bmi < 25 ? "average" : "broad";
-    const measured = !est.chest && !est.hips;           // 실측일 때만 체형 비율 판단
-    if (measured && hips - chest >= 5) body = "curvy";
-    else if (measured && chest - hips >= 8) body = "broad";
-    const tone = (form.querySelector("input[name=tone]:checked") || {}).value || "neutral";
-    const pref = (form.querySelector("input[name=pref]:checked") || {}).value || "regular";
-    const cats = $$("input[name=cat]:checked", form).map(i => i.value);
-    const m = new Date().getMonth() + 1, season = (m >= 4 && m <= 9) ? "SS" : "FW";
-    state.user = { h, w, bmi, chest, waist, hips, est, body, tone, pref, cats, season };
-    note("");
-    recommend();
-  });
-
-  /* ── 3. 추천 ── */
-  const BODY_LABEL = { slim: "a slim frame", average: "a balanced frame", broad: "a broad frame", curvy: "a curvy frame" };
-  const PREF_NEAR = { slim: ["slim", "regular"], regular: ["regular", "slim", "relaxed"], relaxed: ["relaxed", "regular", "oversized"], oversized: ["oversized", "relaxed"] };
-  function recommend() {
+    e.preventDefault(); note("");
+    if (!ENGINE || !CATALOG?.ITEMS?.length) return note("상품 정보를 불러오지 못했습니다. 페이지를 새로고침해 주세요.");
+    if (state.photoLoading) return note("사진 확인이 끝나면 다시 눌러 주세요.");
+    if (!state.photo) { input.focus(); return note("먼저 사진을 선택해 주세요."); }
+    try { state.user = ENGINE.profile(Object.fromEntries(new FormData(form))); }
+    catch (err) { return note(err.message); }
+    state.items = ENGINE.forGender(CATALOG.ITEMS, state.user.gender);
+    state.brand = "all"; state.category = "all"; $("#categoryFilter").value = "all";
+    $$("[data-brand]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.brand === "all")));
     const u = state.user;
-    const scored = CAT.ITEMS.filter(it => u.cats.includes(it.cat)).map(it => {
-      let s = 0; const why = [];
-      if (it.tone === u.tone) { s += 3; why.push("Your tone"); } else if (it.tone === "neutral") { s += 1.5; }
-      if (it.season === u.season) { s += 2; why.push("In season"); } else if (it.season === "ALL") { s += 1.2; }
-      if (it.body.includes(u.body)) { s += 2.5; why.push("Your shape"); }
-      const pi = PREF_NEAR[u.pref].indexOf(it.fit); if (pi === 0) { s += 2; why.push("Your fit"); } else if (pi > 0) { s += .8; }
-      s += (hash(it.id + u.h + u.w) % 10) / 20;   // 동점 흔들기
-      return { it, s, why };
-    }).sort((a, b) => b.s - a.s);
-    // 카테고리 다양성: 같은 카테고리 3개 초과 금지
-    const count = {}, picks = [];
-    for (const p of scored) { count[p.it.cat] = (count[p.it.cat] || 0) + 1; if (count[p.it.cat] <= 3) picks.push(p); if (picks.length >= 8) break; }
-    state.picks = picks;
-    $("#bodyLabel").textContent = BODY_LABEL[u.body];
-    $("#picksWhy").textContent = `${cap(u.tone)} undertone · ${u.season === "SS" ? "spring/summer" : "autumn/winter"} season · you like ${u.pref} fits. Tap an item to try it on.`;
-    const grid = $("#picksGrid"); grid.innerHTML = "";
-    picks.forEach((p, i) => {
-      const b = document.createElement("button"); b.type = "button"; b.className = "pick"; b.dataset.id = p.it.id;
-      b.innerHTML = `<span class="pick__rank">${i + 1}</span><span class="pick__price">$${p.it.price}</span>
-        <div class="pick__img"><img src="${p.it.image}" alt="${p.it.name}" loading="lazy" /></div>
-        <div class="pick__body"><p class="pick__brand">${p.it.brand}</p><p class="pick__name">${p.it.name}</p>
-        <div class="pick__tags">${p.why.map(w => `<span>${w}</span>`).join("")}<span>${cap(p.it.fit)}</span></div></div>`;
-      b.addEventListener("click", () => select(p.it));
-      grid.appendChild(b);
-    });
-    $("#picks").hidden = false; $("#studio").hidden = false;
-    $("#picks").scrollIntoView({ behavior: "smooth", block: "start" });
-    if (picks[0]) select(picks[0].it, true);
+    $("#profileSummary").textContent = `${genderName(u.gender)} · ${u.height} cm / ${u.weight} kg · 가슴 ${u.chest} · 허리 ${u.waist} · 엉덩이 ${u.hips} cm`;
+    $("#estimateNote").textContent = u.estimated.length ? `${u.estimated.map(k => ENGINE.LABELS[k]).join("·")}는 추정값입니다. 해당 치수를 입력하면 추천이 더 정확해집니다.` : "입력한 실측값으로 계산했습니다. 마음에 드는 옷을 눌러 사이즈를 확인하세요.";
+    render(); $("#picks").hidden = false; $("#picksTitle").focus({ preventScroll: true }); $("#picks").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $$("[data-brand]").forEach(button => button.addEventListener("click", () => {
+    state.brand = button.dataset.brand;
+    $$("[data-brand]").forEach(b => b.setAttribute("aria-pressed", String(b === button))); render();
+  }));
+  $("#categoryFilter").addEventListener("change", e => { state.category = e.target.value; render(); });
+  function resultLabel(r) {
+    if (!r.best) return r.status === "unavailable" ? "사이즈표 확인 필요" : "추천 범위 밖";
+    if (r.status === "borderline") return "경계 사이즈";
+    return r.estimated.length ? "추정 추천" : "추천 사이즈";
   }
-  function hash(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) | 0; return Math.abs(h); }
-  const cap = s => s[0].toUpperCase() + s.slice(1);
-
-  /* ── 4. 선택 → 스튜디오 + 핏 체크 ── */
-  function select(it, quiet) {
-    state.sel = it; state.aiImg = null;
-    $$(".pick").forEach(b => b.classList.toggle("on", b.dataset.id === it.id));
-    $("#selImg").src = it.image; $("#selBrand").textContent = it.brand; $("#selName").textContent = it.name;
-    $("#selMeta").textContent = `${cap(it.cat)} · ${cap(it.fit)} fit · ${it.tone} tone · $${it.price}`;
-    const im = new Image(); im.onload = () => { state.gImg = im; resetPose(); draw(); }; im.src = it.image;
-    fitCheck(it);
-    if (!quiet) $("#studio").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-  function resetPose() {
-    const c = state.sel ? state.sel.cat : "top";
-    state.g = c === "bottom" ? { x: .5, y: .68, s: 1, r: 0 } : c === "dress" ? { x: .5, y: .52, s: 1.15, r: 0 } : { x: .5, y: .37, s: 1, r: 0 };
-    $("#scaleRange").value = state.g.s; $("#rotRange").value = 0;
-  }
-
-  /* ── 캔버스 ── */
-  const cv = $("#stage"), cx = cv.getContext("2d");
-  function draw() {
-    const W = cv.width, H = cv.height;
-    cx.clearRect(0, 0, W, H);
-    cx.fillStyle = "#27272f"; cx.fillRect(0, 0, W, H);
-    const base = state.aiImg || state.photo;
-    if (!base) {
-      cx.fillStyle = "rgba(255,255,255,.35)"; cx.font = "600 34px Inter, sans-serif"; cx.textAlign = "center";
-      cx.fillText("Your photo appears here", W / 2, H / 2); return;
+  function render() {
+    if (!state.user) return;
+    const grid = $("#picksGrid"); grid.replaceChildren();
+    const visible = state.items.filter(it => (state.brand === "all" || it.brand === state.brand) && (state.category === "all" || it.cat === state.category));
+    $("#resultCount").textContent = `${genderName(state.user.gender)} ${visible.length}개 · 상품을 선택하면 내 사이즈와 비교표를 볼 수 있어요.`;
+    $("#emptyResults").hidden = visible.length > 0;
+    for (const brand of ["UNIQLO", "ZARA"]) {
+      const items = visible.filter(it => it.brand === brand); if (!items.length) continue;
+      const section = document.createElement("section"); section.className = "brand-section"; section.setAttribute("aria-label", brand);
+      section.innerHTML = `<div class="brand-section__heading"><h3>${brand}</h3><span>${genderName(state.user.gender)} / ${items.length}개</span></div><div class="picks"></div>`;
+      items.forEach((it, i) => {
+        const r = ENGINE.recommend(it, state.user), label = resultLabel(r), shortSize = r.best?.label.split(" (")[0] || "확인하기";
+        const button = document.createElement("button"); button.type = "button"; button.className = "pick"; button.dataset.id = it.id;
+        button.setAttribute("aria-pressed", String(state.selected === it.id)); button.setAttribute("aria-label", `${brand} ${it.name}, ${label} ${shortSize}`);
+        button.innerHTML = `<div class="pick__img"><img src="${esc(it.image)}" alt="${esc(it.name)} 공식 상품 사진" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="450" height="600" /><span class="pick__number">${String(i + 1).padStart(2, "0")}</span></div><div class="pick__body"><p class="pick__name">${esc(it.name)}</p><p class="pick__price">${money(it.price)}</p><div class="pick__size ${r.best ? "" : "pick__size--muted"}"><span>${label}</span><b>${esc(shortSize)} ↗</b></div></div>`;
+        button.querySelector("img").addEventListener("error", e => {
+          e.currentTarget.hidden = true; const holder = e.currentTarget.parentElement; holder.classList.add("image-error");
+          const message = document.createElement("span"); message.textContent = "사진을 불러오지 못했어요. 선택 후 공식몰에서 확인해 주세요."; holder.append(message);
+        }, { once: true });
+        button.addEventListener("click", () => select(it)); section.querySelector(".picks").append(button);
+      });
+      grid.append(section);
     }
-    // cover
-    const k = Math.max(W / base.width, H / base.height), bw = base.width * k, bh = base.height * k;
-    cx.drawImage(base, (W - bw) / 2, (H - bh) / 2, bw, bh);
-    if (state.aiImg || !state.gImg) return;
-    const g = state.g, gw = W * .62 * g.s, gh = gw * 1.2;
-    cx.save(); cx.translate(W * g.x, H * g.y); cx.rotate(g.r * Math.PI / 180);
-    cx.globalAlpha = .96; cx.shadowColor = "rgba(0,0,0,.35)"; cx.shadowBlur = 24; cx.shadowOffsetY = 10;
-    cx.drawImage(state.gImg, -gw / 2, -gh / 2, gw, gh);
-    cx.restore();
   }
-  // 드래그 / 핀치
-  let drag = null, pinch = null;
-  const pos = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; };
-  const pts = new Map();
-  cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, pos(e)); if (pts.size === 1) drag = { p: pos(e), g: { ...state.g } }; else if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: state.g.s }; drag = null; } });
-  cv.addEventListener("pointermove", e => {
-    if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, pos(e));
-    if (pinch && pts.size === 2) { const [a, b] = [...pts.values()]; state.g.s = clamp(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, .4, 1.6); $("#scaleRange").value = state.g.s; draw(); return; }
-    if (drag) { const p = pos(e); state.g.x = drag.g.x + (p.x - drag.p.x); state.g.y = drag.g.y + (p.y - drag.p.y); draw(); }
-  });
-  ["pointerup", "pointercancel"].forEach(ev => cv.addEventListener(ev, e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (pts.size === 0) drag = null; }));
-  cv.addEventListener("wheel", e => { e.preventDefault(); state.g.s = clamp(state.g.s * (e.deltaY < 0 ? 1.05 : .95), .4, 1.6); $("#scaleRange").value = state.g.s; draw(); }, { passive: false });
-  $("#scaleRange").addEventListener("input", e => { state.g.s = +e.target.value; draw(); });
-  $("#rotRange").addEventListener("input", e => { state.g.r = +e.target.value; draw(); });
-  $("#resetBtn").addEventListener("click", () => { state.aiImg = null; resetPose(); draw(); $("#stageBadge").textContent = "Demo preview · drag to move · pinch or slider to resize"; });
-  $("#saveBtn").addEventListener("click", () => { const a = document.createElement("a"); a.download = `thepit-fit-${(state.sel || {}).id || "look"}.jpg`; a.href = cv.toDataURL("image/jpeg", .92); a.click(); });
-  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-
-  /* ── AI 가상 착용 (엔드포인트가 있을 때만) ──
-     요청: POST JSON { photo: dataURL(jpeg), garment: dataURL(png), category, item }
-     응답: { image: dataURL | https URL }  */
-  $("#aiBtn").addEventListener("click", async () => {
-    if (!state.photo || !state.sel) return;
-    const busy = $("#stageBusy"); busy.hidden = false;
-    try {
-      const gc = document.createElement("canvas"); gc.width = 800; gc.height = 960; gc.getContext("2d").drawImage(state.gImg, 0, 0, 800, 960);
-      const res = await fetch(CFG.TRYON_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photo: state.photo.src, garment: gc.toDataURL("image/png"), category: state.sel.cat, item: state.sel.id }) });
-      const j = await res.json(); if (!j.image) throw new Error("no image");
-      const im = new Image(); im.crossOrigin = "anonymous";
-      im.onload = () => { state.aiImg = im; draw(); $("#stageBadge").textContent = "AI try-on result"; busy.hidden = true; };
-      im.onerror = () => { busy.hidden = true; note("Try-on server returned an image we couldn't load."); };
-      im.src = j.image;
-    } catch (err) { busy.hidden = true; $("#stageBadge").textContent = "AI try-on failed — showing demo preview"; }
-  });
-
-  /* ── 5. 핏 체크 ── */
-  const RANK = { tight: 4, snug: 2, fit: 0, roomy: 1, loose: 3 };
-  const LABEL = { tight: "Too tight", snug: "Snug", fit: "Good fit", roomy: "Roomy", loose: "Loose" };
-  function verdict(v, [lo, hi]) { if (v > hi + 3) return "tight"; if (v > hi) return "snug"; if (v >= lo) return "fit"; if (v >= lo - 7) return "roomy"; return "loose"; }
-  function fitCheck(it) {
-    const u = state.user, wrap = $("#fitSizes"); wrap.innerHTML = "";
-    const rows = Object.entries(it.sizes).map(([tag, rg]) => {
-      const parts = Object.entries(rg).map(([k, range]) => ({ k, range, v: u[k], vd: verdict(u[k], range) }));
-      const worst = parts.reduce((a, p) => RANK[p.vd] > RANK[a.vd] ? p : a, parts[0]);
-      const dist = parts.reduce((a, p) => a + Math.abs(p.v - (p.range[0] + p.range[1]) / 2), 0);
-      return { tag, parts, vd: worst.vd, dist };
-    });
-    const best = rows.slice().sort((a, b) => RANK[a.vd] - RANK[b.vd] || a.dist - b.dist)[0];
-    $("#fitLead").innerHTML = best.vd === "fit"
-      ? `Your size in this piece is <b class="gold">${best.tag}</b>.`
-      : `Closest size is <b class="gold">${best.tag}</b> — ${LABEL[best.vd].toLowerCase()} on you.`;
-    rows.forEach(r => {
-      const el = document.createElement("div"); el.className = "size" + (r === best ? " best" : "");
-      el.innerHTML = `<span class="size__tag">${r.tag}</span><div class="size__bars">${r.parts.map(p => {
-        const lo = p.range[0] - 12, hi = p.range[1] + 12, pct = x => clamp((x - lo) / (hi - lo) * 100, 0, 100);
-        return `<div class="bar"><span>${cap(p.k)}</span><div class="bar__track"><div class="bar__ok" style="left:${pct(p.range[0])}%;right:${100 - pct(p.range[1])}%"></div><div class="bar__you" style="left:${pct(p.v)}%"></div></div></div>`;
-      }).join("")}</div><span class="size__verdict v-${r.vd}">${LABEL[r.vd]}</span>`;
-      wrap.appendChild(el);
-    });
-    $("#fitEst").hidden = !Object.keys(u.est).length;
+  function select(it) {
+    if (!state.user) return;
+    state.selected = it.id; const r = ENGINE.recommend(it, state.user), chart = it.sizing, keys = chart?.keys || [];
+    $$(".pick").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === it.id)));
+    $("#selBrand").textContent = `${it.brand} / ${genderName(it.gender)}`; $("#selName").textContent = it.name;
+    $("#selMeta").textContent = `${cats[it.cat]} · ${money(it.price)} · 상품 ${it.productCode}`;
+    $("#detailImageError").hidden = true; $("#selImg").hidden = false; $("#selImg").alt = it.name;
+    $("#selImg").onerror = () => { $("#selImg").hidden = true; $("#detailImageError").hidden = false; }; $("#selImg").src = it.image;
+    $("#recommendLabel").textContent = resultLabel(r); $("#recommendedSize").textContent = r.best?.label || "맞는 사이즈 확인 필요";
+    $("#sizeAnswer").classList.toggle("unavailable", !r.best);
+    $("#recommendReason").textContent = !r.best ? "확인된 사이즈표 안에서 무리 없이 맞는 사이즈를 찾지 못했습니다. 실측값과 공식몰 안내를 확인해 주세요." : r.status === "borderline" ? "두 사이즈의 경계이거나 일부 치수가 기준에 가깝습니다. 아래 비교표와 공식몰 실측을 함께 확인하세요." : `${keys.map(k => `${ENGINE.LABELS[k]} ${state.user[k]} cm`).join(" · ")} 기준으로 가장 가까운 사이즈입니다.`;
+    const basis = chart?.kind === "garment-flat" ? "공식 상품 실측(단면 × 2)에 Fit Room의 착용 여유 기준을 적용했습니다. 아래 표는 옷 둘레입니다." : chart?.kind === "body-points" ? "공식 신체 치수 기준값에 가장 가까운 사이즈를 계산했습니다. 아래 표는 브랜드가 안내하는 신체 둘레입니다." : "유니클로 공식 신체 사이즈 가이드와 상품의 표기 사이즈 범위 기준입니다. 아래 표는 신체 둘레입니다.";
+    $("#sizeBasis").textContent = chart ? basis : "이 상품의 사이즈표가 아직 연결되지 않았습니다.";
+    if (chart?.scope === "brand-guide") $("#sizeBasis").textContent += " 상품별 실측이 아닌 브랜드 공통 가이드 기준입니다.";
+    $("#sizeSource").hidden = !chart?.source;
+    if (chart?.source) $("#sizeSource").href = chart.source;
+    $("#fitHead").innerHTML = `<tr><th scope="col">사이즈</th>${keys.map(k => `<th scope="col">${ENGINE.LABELS[k]}</th>`).join("")}<th scope="col">비교</th></tr>`;
+    $("#fitRows").innerHTML = `<tr class="my-row"><td>내 치수</td>${keys.map(k => `<td>${state.user[k]}${state.user.estimated.includes(k) ? "*" : ""}</td>`).join("")}<td>cm</td></tr>` + r.rows.map(row => {
+      const best = row === r.best;
+      return `<tr class="${best ? "best" : ""}"><th scope="row">${esc(row.label)}</th>${row.parts.map(p => `<td>${Array.isArray(p.reference) ? p.reference.join("–") : chart.kind === "garment-flat" ? p.reference * 2 : p.reference}</td>`).join("")}<td>${best ? "추천" : row.fits ? "범위 안" : row.over > 2 ? "작음" : row.under > 3 ? "여유 큼" : "경계"}</td></tr>`;
+    }).join("");
+    const caution = [];
+    if (r.estimated.length) caution.push(`* ${r.estimated.map(k => ENGINE.LABELS[k]).join("·")}는 키·몸무게로 추정했습니다.`);
+    if (!keys.includes("hips") && it.cat === "bottom") caution.push("이 사이즈표에는 엉덩이 치수가 없어 허리를 기준으로 추천합니다.");
+    if (/로우라이즈|미드라이즈/.test(it.name)) caution.push("이 바지는 허리선이 낮아 실제 착용 위치의 둘레도 확인해 주세요.");
+    caution.push("실시간 재고와 원단의 신축성은 반영하지 않습니다.");
+    $("#fitCaution").textContent = caution.join(" "); $("#shopLink").href = it.url;
+    dialog.showModal(); document.body.classList.add("dialog-open"); dialog.scrollTop = 0;
   }
-
-  draw();
+  $("#closeDialog").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("close", () => document.body.classList.remove("dialog-open"));
+  dialog.addEventListener("click", e => { if (e.target !== dialog) return; const b = dialog.getBoundingClientRect(); if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) dialog.close(); });
+  $("#editMeasurements").addEventListener("click", () => { dialog.close(); $("#measurements").scrollIntoView({ behavior: "smooth" }); $("#chest").focus({ preventScroll: true }); });
 })();
