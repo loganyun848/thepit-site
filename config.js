@@ -21,6 +21,11 @@ window.THEPIT_CONFIG = {
   // 문의 / 이메일 접수용 주소
   CONTACT_EMAIL: "ceo@lecple.com",
 
+  // AI 가상착용 서버와 공개 Turnstile 사이트 키. API 비밀 키는 여기에 넣지 마세요.
+  // 연결 절차: backend/tryon/README.md (fal.ai + Cloudflare Worker)
+  TRYON_ENDPOINT: "",
+  TRYON_TURNSTILE_SITE_KEY: "",
+
   // 이번 회차 안내 (상단 공지 띠에 표시, 비우면 숨김)
   ROUND_NOTICE: "EP.1 now casting · One applicant is picked at random every episode",
 

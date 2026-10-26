@@ -50,7 +50,12 @@
     <h2>4. Sharing and processors</h2>
     <p>Website inquiries and applications are sent through FormSubmit (Devro LABS) to ceo@lecple.com. FormSubmit processes the fields and attachments to deliver the email. Its documentation states that text submissions are retained in its archive for 30 days and uploaded files are not retained in that archive. See the <a href="https://formsubmit.co/privacy.pdf" target="_blank" rel="noopener">FormSubmit privacy policy</a> and <a href="https://formsubmit.co/documentation" target="_blank" rel="noopener">delivery documentation</a>. Processing may take place outside your country.</p>
     <p>If we switch applications to our Google Apps Script backend, application information and photos will instead be stored in Google Sheets and Google Drive, operated by Google LLC. The website's submission notice will identify that route.</p>
-    <p>Fit Room photos and body measurements are processed only in your browser and are not submitted through these forms.</p>
+    <h2 id="fit-room">Fit Room · AI 착용 이미지와 캐릭터</h2>
+    <p lang="ko">사진 업로드와 사이즈 비교 단계에서는 사진·신체 치수·평소 사이즈를 브라우저 메모리에서만 처리합니다. 사진으로 신체 치수나 성별을 판독하지 않습니다. 새로고침하거나 페이지를 닫으면 입력과 생성 결과가 사라집니다.</p>
+    <p lang="ko">AI 서비스가 연결된 경우, 각 단계의 사진 전송 동의를 선택하고 생성 버튼을 눌렀을 때만 사진을 전송합니다. 착용 생성에는 내 사진과 선택한 상품 사진을, 캐릭터 생성에는 원본 사진과 직전에 생성한 착용 이미지를 사용합니다. 이미지 처리 경로는 Cloudflare Workers → fal.ai이며, 착용은 FASHN, 캐릭터는 FLUX.2 모델을 사용합니다. 키·몸무게·신체 둘레·평소 사이즈는 이 생성 API로 전송하지 않습니다. 생성 이미지는 회원 프로필이나 공개 갤러리에 저장·게시하지 않습니다.</p>
+    <p lang="ko">전송 전에 사진을 최대 1,600픽셀의 JPG로 변환해 파일 메타데이터를 제거합니다. 우리 서버에는 사진이나 결과를 영구 저장하지 않습니다. fal.ai 요청 기록의 입력·출력 저장을 끄고, 서비스가 지원하는 생성 파일의 만료 시간을 1시간으로 지정합니다. 이는 외부 사업자의 모든 로그가 즉시 삭제된다는 뜻은 아닙니다. 별도 보관·처리 기준은 <a href="https://fal.ai/privacy" target="_blank" rel="noopener">fal.ai 개인정보처리방침</a> 및 <a href="https://fal.ai/docs/documentation/model-apis/media-expiration" target="_blank" rel="noopener">미디어 보관 안내</a>를 따르며, 국외에서 처리될 수 있습니다.</p>
+    <p lang="ko">자동 요청과 과도한 사용을 방지하기 위해 Cloudflare Turnstile을 사용합니다. Cloudflare는 보안 확인에 필요한 IP 주소·브라우저 정보 등을 처리할 수 있습니다. 서버는 IP 주소에서 만든 일일 해시값, 요청 식별자와 사용 횟수를 보관하며 마지막 허용 요청으로부터 약 24시간 후 삭제합니다. 원본 IP 주소를 해당 사용량 저장소에 보관하지 않습니다. 자세한 내용은 <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare 개인정보처리방침</a>을 참고하세요.</p>
+    <p lang="ko">다른 사진이나 상품을 선택하면 이전 결과는 초기화됩니다. 저장할 이미지는 페이지를 떠나기 전에 직접 내려받으세요. 동의하지 않으면 이미지 생성은 사용할 수 없지만 상품 탐색과 사이즈 비교는 이용할 수 있습니다. Fit Room 사진은 문의·신청 이메일로 전송되지 않습니다.</p>
 
     <h2>5. Your rights</h2>
     <p>You may at any time ask to access, correct or delete your personal data, or to stop its processing. Send requests to the contact below and we will respond within 10 days. We do not knowingly collect data from children under 14.</p>

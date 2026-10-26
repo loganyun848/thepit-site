@@ -2,3 +2,8 @@
 Thumbs.db
 *.log
 .claude/
+node_modules/
+.wrangler/
+.dev.vars*
+.env*
+!*.example

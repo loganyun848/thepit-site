@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "thepit-tryon",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-26",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGINS": "https://the-pit.site,https://www.the-pit.site",
+    "DAILY_LIMIT": "10"
+  },
+  "durable_objects": { "bindings": [{ "name": "TRYON_GATE", "class_name": "TryOnGate" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TryOnGate"] }],
+  "observability": { "enabled": false }
+}

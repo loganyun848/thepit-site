@@ -1,0 +1,14 @@
+{
+  "name": "thepit-tryon-backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "wrangler deploy --dry-run --outdir .wrangler/build",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.3",
+    "wrangler": "4.152.0"
+  }
+}

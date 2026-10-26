@@ -57,3 +57,5 @@ for (const item of items) {
 const catalog = { updatedAt, ITEMS:items };
 fs.writeFileSync(path.join(root,'fit-catalog.js'), '/* Official product photos and size references; snapshot '+updatedAt+'. Built by scripts/build-fit-catalog.cjs. */\nwindow.FIT_CATALOG = '+JSON.stringify(catalog,null,2)+';\n');
 console.log('Built 80 products: women/men × UNIQLO/ZARA × 20.');
+fs.mkdirSync(path.join(root,'backend/tryon'), { recursive: true });
+fs.writeFileSync(path.join(root,'backend/tryon/catalog.json'), JSON.stringify(items.map(({id,image,cat})=>({id,image,cat})),null,2)+'\n');
