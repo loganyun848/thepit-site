@@ -16,5 +16,5 @@ jobs:
           cache: npm
           cache-dependency-path: backend/tryon/package-lock.json
       - run: npm ci --prefix backend/tryon
-      - run: node --test tests/fit-sizing.test.cjs tests/form-delivery.test.cjs tests/tryon-worker.test.mjs backend/tryon/tests/studio.test.mjs
+      - run: node --test tests/fit-sizing.test.cjs tests/form-delivery.test.cjs tests/tryon-worker.test.mjs tests/ai-setup.test.cjs backend/tryon/tests/studio.test.mjs
       - run: npm run check --prefix backend/tryon

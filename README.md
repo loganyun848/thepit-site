@@ -18,6 +18,7 @@
 | `fit-sizing.js` | 실제 입력 치수와 평소 사이즈 비교. 미입력 둘레는 추정하지 않음 |
 | `fit-tryon.js` | 실제 AI 착용 → THE PIT 캐릭터 생성 흐름, 동의·상태·오류·다운로드 |
 | `backend/tryon/` | fal.ai를 호출하는 Cloudflare Worker, 비밀 키 보호, 사용량 제한, 연결 안내 |
+| `scripts/connect-ai.cjs` | 이 PC에서만 여는 AI 연결 화면. 로그인·키 입력 후 서버 배포와 공개 설정 반영 |
 | `fit-catalog.js` | 여성/남성 × UNIQLO/ZARA × 20개 = 총 80개 상품과 사이즈표 |
 | `data/` / `scripts/build-fit-catalog.cjs` | 확인한 상품·치수 원본과 정적 카탈로그 생성기 |
 | `tests/fit-sizing.test.cjs` | 사이즈 추천과 카탈로그 검증 |
@@ -129,6 +130,8 @@ Apps Script 편집기에서 함수를 골라 ▶ 실행:
 사진은 각 AI 단계의 동의를 체크하고 생성 버튼을 눌러야 서버로 전송됩니다. 신체 치수와 평소 사이즈는 생성 API에 보내지 않습니다. 입력 변경 시 추천과 생성 결과를 초기화하고, 변경 전 진행하던 요청의 늦은 결과가 다시 나타나지 않도록 처리합니다. 이미지는 브라우저 메모리에만 유지하므로 페이지를 떠나기 전에 저장해야 합니다.
 
 **현재 생성 연결 상태:** 계정과 키가 없어 `TRYON_ENDPOINT`, `TRYON_TURNSTILE_SITE_KEY`는 비어 있습니다. 실제 화면도 ‘AI 연결 준비 중’으로 표시하며 생성 버튼은 비활성화합니다. 화면과 서버 구현을 실제 AI 생성 검증과 구분합니다. 연결 방법은 [backend/tryon/README.md](backend/tryon/README.md)에 정리했습니다.
+
+터미널 명령을 줄이려면 `node scripts/connect-ai.cjs` 실행 후 `http://127.0.0.1:8767`에서 연결합니다. 계정 소유자의 인증과 키 입력이 필요하며, 키는 채팅이나 공개 사이트 입력란에 보내지 않습니다.
 
 ### 상품 데이터와 사이즈 기준
 

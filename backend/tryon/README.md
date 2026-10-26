@@ -6,6 +6,16 @@
 
 이 서버 하나에서 착용(FASHN v1.6)과 캐릭터(FLUX.2 Pro Edit)를 처리합니다. 모델마다 별도 계정을 만들 필요 없이 fal.ai 키 하나를 사용합니다. 프런트엔드는 GitHub Pages를 유지합니다.
 
+## 로컬 연결 화면으로 설정하기
+
+저장소 루트에서 `node scripts/connect-ai.cjs`를 실행하고 `http://127.0.0.1:8767`을 엽니다. 이 화면은 이 PC에서만 접근할 수 있습니다.
+
+1. **Cloudflare 로그인 시작** → 표시되는 인증 링크에서 계정 소유자가 로그인/승인합니다.
+2. fal.ai API key와 Turnstile의 Site key / Secret key를 로컬 입력란에 등록합니다. 키를 채팅에 보내지 마세요.
+3. **서버 배포하고 홈페이지 연결**을 누르면 Worker 배포 → Cloudflare Secrets 등록 → 설정 확인 → 공개 값 두 개만 config.js에 반영 → GitHub Pages 푸시를 수행합니다.
+
+API 계정 생성·결제·약관 승인과 Turnstile 위젯 생성은 서비스 대시보드에서 직접 해야 합니다. 연결 화면은 비밀 키를 파일/로그/Git에 저장하지 않으며, Wrangler 표준 입력으로 전달합니다. 이 연결 단계에서는 유료 이미지를 생성하지 않습니다. 실제 생성 성공과 품질은 아래 4단계에서 확인합니다. 저장소에 미검토 변경 사항이 있으면 자동 배포를 중단합니다.
+
 ## 1. 계정과 두 가지 키 준비
 
 1. [fal.ai](https://fal.ai/) 계정에서 사용할 금액을 정하고 크레딧을 준비합니다. [API 키 관리](https://fal.ai/dashboard/keys)에서 키를 발급합니다. 생성 권한이 있는 키를 사용하세요. 이 값은 **FAL_KEY**이며 채팅·GitHub·config.js에 넣지 않습니다.
