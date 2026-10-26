@@ -1,6 +1,14 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const http=require('node:http');
-const {createServer,publicConfig,HOST,ORIGIN}=require('../scripts/connect-ai.cjs');
+const {createServer,publicConfig,ensureWidget,LOGIN_SCOPES,HOST,ORIGIN}=require('../scripts/connect-ai.cjs');
+test('Turnstile is created for only the two production domains and an existing widget is reused',async()=>{
+  const calls=[];let stored;
+  const network=async(url,init)=>{calls.push({url,init});if(init.method==='POST'){stored={...JSON.parse(init.body),sitekey:'public-test-sitekey',secret:'private-test-secret'};return Response.json({success:true,result:stored})}return Response.json({success:true,result:url.includes('?')?(stored?[stored]:[]):stored})};
+  const first=await ensureWidget('account','test-token',network);assert.equal(first.secret,'private-test-secret');
+  assert.deepEqual(stored.domains,['the-pit.site','www.the-pit.site']);assert.equal(stored.clearance_level,'no_clearance');
+  const second=await ensureWidget('account','test-token',network);assert.equal(second.siteKey,first.siteKey);assert.equal(calls.filter(c=>c.init.method==='POST').length,1);
+  assert.ok(LOGIN_SCOPES.includes('challenge-widgets.write'));assert.ok(!LOGIN_SCOPES.some(s=>s.includes('email')));
+});
 test('Setup writes only the validated public endpoint and site key',()=>{
   const source='TRYON_ENDPOINT: "",\nTRYON_TURNSTILE_SITE_KEY: "",\nFORM_ENDPOINT: "keep"';
   const result=publicConfig(source,'https://thepit-tryon.owner.workers.dev','public-site-key');

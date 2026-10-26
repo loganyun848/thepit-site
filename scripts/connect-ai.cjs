@@ -8,6 +8,30 @@ const root = path.resolve(__dirname, '..');
 const backend = path.join(root, 'backend/tryon');
 const cli = path.join(backend, 'node_modules/wrangler/bin/wrangler.js');
 const PORT = 8767, HOST = `127.0.0.1:${PORT}`, ORIGIN = `http://${HOST}`;
+const LOGIN_SCOPES = ['account:read','user:read','workers:write','workers_scripts:write','challenge-widgets.write','offline_access'];
+
+async function ensureWidget(account, authToken, network = fetch) {
+  const base = 'https://api.cloudflare.com/client/v4/accounts/'+account+'/challenges/widgets';
+  const headers = {Authorization:'Bearer '+authToken,'Content-Type':'application/json'};
+  const api = async (suffix='', method='GET', body) => {
+    const response = await network(base+suffix,{method,headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});
+    let result;try{result=await response.json()}catch{throw Error('Cloudflare 보안 위젯 응답을 확인하지 못했습니다.')}
+    if(!response.ok||!result.success)throw Error('Turnstile 자동 설정에 실패했습니다. Cloudflare 로그인에서 보안 위젯 권한도 승인해야 합니다.');
+    return result;
+  };
+  let existing;
+  for(let page=1;page<=20;page++) {
+    const listed=await api('?per_page=1000&page='+page);
+    if(!Array.isArray(listed.result))throw Error('기존 보안 위젯 목록을 확인하지 못했습니다.');
+    existing=listed.result.find(widget=>widget.name==='THE PIT Fit Room');
+    if(existing||page*1000>=(listed.result_info?.total_count||listed.result.length))break;
+    if(page===20)throw Error('보안 위젯이 너무 많습니다. 계정 설정 확인이 필요합니다.');
+  }
+  if(existing && (existing.mode!=='managed'||existing.domains?.length!==2||!['the-pit.site','www.the-pit.site'].every(domain=>existing.domains.includes(domain))))throw Error('같은 이름의 보안 위젯 설정이 다릅니다. 운영자 확인이 필요합니다.');
+  const widget=existing ? (await api('/'+encodeURIComponent(existing.sitekey))).result : (await api('','POST',{name:'THE PIT Fit Room',domains:['the-pit.site','www.the-pit.site'],mode:'managed',clearance_level:'no_clearance'})).result;
+  if(!widget?.sitekey||!widget?.secret)throw Error('보안 위젯 키를 확인하지 못했습니다.');
+  return {siteKey:widget.sitekey,secret:widget.secret};
+}
 
 function publicConfig(source, endpoint, siteKey) {
   if (!/^https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/.test(endpoint)) throw Error('올바른 Worker 주소가 필요합니다.');
@@ -34,8 +58,6 @@ async function connect(data, state) {
   let secretInput;
   try {
     if (typeof data.falKey !== 'string' || data.falKey.trim().length < 10 || data.falKey.length > 4096 || /[\r\n]/.test(data.falKey)) throw Error('fal.ai 키를 확인해 주세요.');
-    if (typeof data.turnstileSecret !== 'string' || !/^[A-Za-z0-9_-]{10,200}$/.test(data.turnstileSecret)) throw Error('Turnstile Secret key를 확인해 주세요.');
-    if (!/^[A-Za-z0-9_-]{10,100}$/.test(data.siteKey || '')) throw Error('Turnstile 공개 Site key를 확인해 주세요.');
     if ((await run('git', ['status','--porcelain'])).trim()) throw Error('작업 폴더에 미저장 변경이 있습니다. 먼저 변경 사항 검토가 필요합니다.');
     state.message = 'Cloudflare 로그인과 계정을 확인하고 있습니다.';
     const identity = await run(process.execPath, [cli,'whoami'], { cwd: backend });
@@ -44,6 +66,13 @@ async function connect(data, state) {
     const account = data.accountId?.trim() || (accounts.length === 1 ? accounts[0] : '');
     if (!/^[a-f0-9]{32}$/i.test(account)) throw Error('Cloudflare 계정이 여러 개이거나 계정 확인이 필요합니다. 운영할 Account ID를 입력해 주세요.');
     const env = { CLOUDFLARE_ACCOUNT_ID: account };
+    state.message = '홈페이지용 보안 위젯을 자동 설정하고 있습니다.';
+    let auth;
+    try {auth=JSON.parse(await run(process.execPath,[cli,'auth','token','--json'],{cwd:backend,env}));}
+    catch {throw Error('Cloudflare 인증 정보를 확인하지 못했습니다. 로그인부터 다시 진행해 주세요.');}
+    if(!['oauth','api_token'].includes(auth.type)||!auth.token)throw Error('Cloudflare OAuth 로그인이 필요합니다.');
+    let widget;try{widget=await ensureWidget(account,auth.token)}finally{auth.token=''}
+    data.siteKey=widget.siteKey;data.turnstileSecret=widget.secret;widget.secret='';
     state.message = '이미지 생성 서버를 배포하고 있습니다.';
     const deployed = await run(process.execPath, [cli,'deploy'], { cwd: backend, env });
     const endpoint = deployed.match(/https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev\b/)?.[0];
@@ -75,11 +104,11 @@ async function connect(data, state) {
 }
 
 function createServer({ token = randomBytes(32).toString('hex'), onConnect = connect, login } = {}) {
-  const state = { phase: 'idle', busy: false, message: '로그인 후 세 가지 키를 등록하면 서버와 홈페이지 연결을 진행합니다.', loginUrl: '', endpoint: '' };
+  const state = { phase: 'idle', busy: false, message: 'Cloudflare 로그인과 fal.ai 키 등록 후 나머지 연결을 자동 진행합니다.', loginUrl: '', endpoint: '' };
   const loginAction = login || (async () => {
     state.busy = true; state.phase = 'login'; state.message = 'Cloudflare 인증 페이지를 준비하고 있습니다.';
     try {
-      await run(process.execPath, [cli, 'login', '--browser=false'], { cwd: backend, onOutput(output) {
+      await run(process.execPath, [cli, 'login', '--browser=false', '--scopes', ...LOGIN_SCOPES], { cwd: backend, onOutput(output) {
         const match = output.match(/https:\/\/dash\.cloudflare\.com\/[^\s\x1b]+/);
         if (match) { state.loginUrl = match[0]; state.message = '아래 Cloudflare 인증 열기 링크에서 본인 계정으로 로그인하고 승인해 주세요.'; }
       }});
@@ -114,4 +143,4 @@ if (require.main === module) {
     server.listen(PORT,'127.0.0.1',()=>console.log('THE PIT AI 연결: '+ORIGIN+' (이 PC에서만 접근 가능)'));
   }).catch(()=>{console.error('먼저 npm ci --prefix backend/tryon 을 실행하세요.');process.exitCode=1});
 }
-module.exports = { createServer, publicConfig, HOST, ORIGIN };
+module.exports = { createServer, publicConfig, ensureWidget, LOGIN_SCOPES, HOST, ORIGIN };
