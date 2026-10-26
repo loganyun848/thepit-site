@@ -12,7 +12,8 @@
   const dialog = $("#sizeDialog"), form = $("#measureForm"), upload = $("#photoUpload"), input = $("#photoInput");
   $("#navToggle").addEventListener("click", () => { const open = $("#navLinks").classList.toggle("open"); $("#navToggle").setAttribute("aria-expanded", String(open)); });
   $("#footYoutube").href = CFG.YOUTUBE_CHANNEL_URL || "index.html";
-  $("#footMail").href = `mailto:${CFG.CONTACT_EMAIL || "marketing@lecple.com"}`;
+  $("#footMail").href = "contact.html";
+  $("#footMail").textContent = "문의하기";
   $("#catalogDate").textContent = CATALOG?.updatedAt || "";
   function invalidate() {
     if (state.user) note("정보가 바뀌었습니다. 아래 버튼을 눌러 사이즈를 다시 확인해 주세요.");

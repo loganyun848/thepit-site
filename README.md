@@ -11,6 +11,8 @@
 | `style.css` | 스타일. 위에서 아래로 갈수록 회색에서 색이 번지는 구조 |
 | `app.js` | 내비, 스크롤 리빌, 사진 미리보기·리사이즈, 폼 검증·전송 |
 | `config.js` | 접수 URL, 유튜브 링크, 공지 문구 |
+| `contact.html` / `contact.css` / `contact.js` | 이메일을 직접 입력하는 문의 페이지 |
+| `form-delivery.js` | 문의·신청을 수신함으로 직접 전송, 사진 첨부, 성공/실패 검증 |
 | `privacy.html` | 개인정보처리방침 |
 | `fit.html` / `fit.css` / `fit.js` | **Fit Room** — 사진·치수 입력 → 브랜드별 실사 상품 20개 → 사이즈 추천 |
 | `fit-sizing.js` | 신체 치수 검증, 미입력 둘레 추정, 사이즈표 비교 |
@@ -51,7 +53,30 @@ Cloudflare DNS 에는 아래 레코드가 있어야 합니다 (Proxy status: **D
 | A | @ | 185.199.111.153 |
 | CNAME | www | loganyun848.github.io |
 
-## 3. 신청 접수 연결 (Google Apps Script, 무료)
+## 3. 문의·신청 메일 접수
+
+문의 페이지는 `contact.html`이며, 메인 메뉴와 푸터, FAQ, Fit Room 푸터에서 연결합니다. 방문자가 이메일을 직접 입력하고 제출하면 FormSubmit을 거쳐 **ceo@lecple.com**으로 전달됩니다. 방문자의 메일 앱이나 메일 계정 로그인은 사용하지 않습니다. 입력한 이메일은 답장 주소(Reply-To)로 전달됩니다.
+
+`config.js`의 `FORM_ENDPOINT`가 전송 주소입니다. 새 수신함은 FormSubmit에서 보내는 메일의 **Activate Form** 링크를 최초 1회 눌러야 합니다. 이 프로젝트의 ceo@lecple.com 주소는 2026-10-26 사용자 활성화 후 실제 전송 API의 성공 응답을 확인했습니다. 수신함을 바꾸거나 전송 도메인을 바꾸면 다시 확인이 필요할 수 있습니다.
+
+- 문의 폼: 이메일, 유형, 내용, 선택 이름/회사명
+- 기존 신청 폼: 입력 항목과 리사이즈한 사진을 실제 파일로 첨부 (사진 합계 10 MB 제한)
+- 서비스가 명시적으로 성공을 응답한 경우에만 완료 화면 표시
+- 실패/시간 초과/미활성화: 오류를 안내하고 입력 내용을 유지. 메일 앱으로 우회하지 않음
+- 자동 확인 메일은 현재 전송 경로에서 제공하지 않음. 담당자가 입력 이메일로 회신
+- FormSubmit은 텍스트 접수를 30일 보관한다고 안내하며, 개인정보 안내 페이지에 해당 처리 경로를 명시
+
+서버의 접수 성공 응답과 실제 수신함의 스팸/분류 상태는 다릅니다. 운영 시 메일함도 확인하세요.
+
+```bash
+node --test tests/form-delivery.test.cjs
+```
+
+전송 서비스 문서: https://formsubmit.co/documentation
+
+### 선택 사항: Google Apps Script로 신청 저장하기
+
+아래 방식은 현재 사용 중인 메일 전송 경로를 대체할 때만 적용합니다. `SUBMIT_ENDPOINT`를 설정하면 **신청 폼만** Google 경로를 사용하며, 문의 폼은 FormSubmit을 유지합니다. 전환 시 신청 폼 하단의 전송 경로 안내도 갱신하세요.
 
 1. Google Sheets 새 문서 생성 → 메뉴 **확장 프로그램 → Apps Script**
 2. `backend/Code.gs` 내용을 전부 붙여넣고 저장
@@ -65,9 +90,9 @@ Cloudflare DNS 에는 아래 레코드가 있어야 합니다 (Proxy status: **D
 - 드라이브 `THE PIT 신청사진/접수ID_이름/` 폴더에 사진이 저장되고
 - 신청자에게 접수 확인 메일, 운영자에게 알림 메일이 갑니다.
 
-`SUBMIT_ENDPOINT` 가 비어 있으면 신청 버튼이 **이메일 접수 안내**로 대체되므로 백엔드 없이도 사이트는 깨지지 않습니다.
+`SUBMIT_ENDPOINT`가 비어 있으면 신청도 `FORM_ENDPOINT`로 직접 전송합니다.
 
-## 4. 회차 운영
+## 4. 회차 운영 (Google Apps Script를 선택한 경우)
 
 Apps Script 편집기에서 함수를 골라 ▶ 실행:
 

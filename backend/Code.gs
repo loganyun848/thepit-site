@@ -19,7 +19,7 @@
 
 const SHEET_NAME = "신청";               // 접수 시트 이름 (없으면 자동 생성)
 const DRIVE_FOLDER_NAME = "THE PIT 신청사진"; // 사진 저장 폴더 (없으면 자동 생성)
-const NOTIFY_EMAIL = "marketing@lecple.com";  // 새 신청이 오면 알림 받을 주소 ("" 이면 안 보냄)
+const NOTIFY_EMAIL = "ceo@lecple.com";  // 새 신청이 오면 알림 받을 주소 ("" 이면 안 보냄)
 const SEND_CONFIRM_MAIL = true;          // 신청자에게 접수 확인 메일 발송
 const BRAND = "THE PIT";
 
@@ -42,6 +42,7 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents || "{}");
     if (data.website) return json({ ok: true }); // 허니팟: 봇은 조용히 무시
     if (!data.name || !data.email || !data.story) return json({ ok: false, error: "필수 항목 누락" }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return json({ ok: false, error: "이메일 형식 오류" });
 
     const id = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyyMMdd-HHmmss") + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
     const folder = getOrCreateFolder_(DRIVE_FOLDER_NAME).createFolder(id + "_" + sanitize_(data.name));
@@ -64,8 +65,8 @@ function doPost(e) {
       data.userAgent || ""
     ]);
 
-    if (SEND_CONFIRM_MAIL) sendConfirm_(data, id);
     if (NOTIFY_EMAIL) notifyTeam_(data, id, folder.getUrl());
+    if (SEND_CONFIRM_MAIL) sendConfirm_(data, id);
     return json({ ok: true, id });
   } catch (err) {
     return json({ ok: false, error: String(err && err.message || err) }, 500);
@@ -144,12 +145,11 @@ function sendConfirm_(d, id) {
   } catch (err) { Logger.log("confirm mail fail: " + err); }
 }
 function notifyTeam_(d, id, folderUrl) {
-  try {
     MailApp.sendEmail({
       to: NOTIFY_EMAIL,
+      replyTo: d.email,
       subject: `[${BRAND} 신청] ${d.name} — ${d.headline || ""}`,
       body: `접수 ${id}\n이름 ${d.name} / ${d.email}\n국가 ${d.country || "-"} · 연령 ${d.ageGroup} · ${d.sns || "-"}\n색 ${d.color} · 스타일 ${d.style}\n\n${d.story}\n\n사진: ${folderUrl}`
     });
-  } catch (err) { Logger.log("notify fail: " + err); }
 }
 function escape_(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }

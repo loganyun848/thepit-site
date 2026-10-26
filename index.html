@@ -38,6 +38,7 @@
       <a href="#characters">Cast</a>
       <a href="#episodes">Episodes</a>
       <a href="fit.html">Fit Room</a>
+      <a href="contact.html">Contact</a>
       <a href="#faq">FAQ</a>
       <a href="#apply" class="btn btn--gold btn--sm">Apply</a>
     </nav>
@@ -273,7 +274,8 @@
               </label>
               <label class="field">
                 <span class="field__label">Email <i>*</i></span>
-                <input type="email" name="email" required placeholder="Where we'll reach you if you're picked" />
+                <input type="email" name="email" required maxlength="254" autocomplete="email" placeholder="Type the email address where we can reach you" />
+                <small>Enter your email directly. Your application is sent from this website.</small>
               </label>
             </div>
             <div class="row">
@@ -441,11 +443,11 @@
           </fieldset>
 
           <div class="form__footer">
-            <p class="form__note" id="formNote"></p>
+            <p class="form__note" id="formNote" role="status" aria-live="polite"></p>
             <button type="submit" class="btn btn--gold btn--lg btn--block" id="submitBtn">
               🔑 Receive the key · Submit application
             </button>
-            <p class="form__fine">A confirmation email follows. If you'd like to stay in the draw for future rounds, you can choose that in the confirmation email.</p>
+            <p class="form__fine">Your application and photos are sent directly to ceo@lecple.com through FormSubmit. We will reply to the email address you entered.</p>
           </div>
         </form>
 
@@ -494,11 +496,11 @@
           </details>
           <details>
             <summary>If I'm not picked, do I have to apply again?</summary>
-            <p>In your confirmation email you can choose “keep me in future draws”, and you'll automatically be included next time. If you don't, we delete your materials when the round ends and you're welcome to apply again later.</p>
+            <p>If you would like to stay in future draws, let us know through the <a href="contact.html">contact form</a>. Otherwise, we delete your materials when the round ends and you're welcome to apply again later.</p>
           </details>
           <details>
             <summary>Can brands or companies take part?</summary>
-            <p>For clothing sponsorship, city or venue collaborations and character licensing, <a id="faqMail" href="#">email us</a>. We design native collaborations that fit naturally inside an episode.</p>
+            <p>For clothing sponsorship, city or venue collaborations and character licensing, <a id="faqMail" href="contact.html">send us an inquiry</a>. We design native collaborations that fit naturally inside an episode.</p>
           </details>
         </div>
       </div>
@@ -515,7 +517,7 @@
         <div class="footer__social">
           <a id="footYoutube" href="#" target="_blank" rel="noopener">YouTube</a>
           <a id="footInsta" href="#" target="_blank" rel="noopener" hidden>Instagram</a>
-          <a id="footMail" href="#">Email</a>
+          <a id="footMail" href="contact.html">Contact · 문의</a>
         </div>
       </div>
       <div class="footer__info">
@@ -527,7 +529,8 @@
     </div>
   </footer>
 
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js?v=20261026"></script>
+  <script src="form-delivery.js?v=20261026"></script>
+  <script src="app.js?v=20261026"></script>
 </body>
 </html>

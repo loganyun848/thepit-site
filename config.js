@@ -5,8 +5,11 @@
 window.THEPIT_CONFIG = {
   // 신청 접수 엔드포인트 (Google Apps Script 웹앱 URL)
   // backend/Code.gs 를 배포한 뒤 "웹 앱 URL" 을 여기에 붙여넣으세요.
-  // 비워 두면 신청 버튼을 눌렀을 때 이메일 접수 안내로 대체됩니다.
+  // 비워 두면 아래 FORM_ENDPOINT로 첨부 사진과 함께 직접 전송합니다.
   SUBMIT_ENDPOINT: "",
+
+  // 사이트 내 문의/신청 전송. 수신함 소유자의 최초 활성화가 필요합니다.
+  FORM_ENDPOINT: "https://formsubmit.co/ajax/ceo@lecple.com",
 
   // 유튜브 채널 / 예고편 링크
   YOUTUBE_CHANNEL_URL: "https://www.youtube.com/@the_pit_video",
@@ -16,7 +19,7 @@ window.THEPIT_CONFIG = {
   INSTAGRAM_URL: "",
 
   // 문의 / 이메일 접수용 주소
-  CONTACT_EMAIL: "marketing@lecple.com",
+  CONTACT_EMAIL: "ceo@lecple.com",
 
   // 이번 회차 안내 (상단 공지 띠에 표시, 비우면 숨김)
   ROUND_NOTICE: "EP.1 now casting · One applicant is picked at random every episode",

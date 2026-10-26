@@ -26,8 +26,7 @@
   }
   ["footYoutube", "doneYoutube"].forEach(id => { const a = $("#" + id); if (a) a.href = yt; });
   if (CFG.INSTAGRAM_URL) { const a = $("#footInsta"); a.href = CFG.INSTAGRAM_URL; a.hidden = false; }
-  const mail = "mailto:" + (CFG.CONTACT_EMAIL || "");
-  ["footMail", "faqMail"].forEach(id => { const a = $("#" + id); if (a) a.href = mail; });
+  ["footMail", "faqMail"].forEach(id => { const a = $("#" + id); if (a) a.href = "contact.html"; });
   if (CFG.ROUND_NOTICE) { $("#noticeText").textContent = CFG.ROUND_NOTICE; $("#notice").hidden = false; }
 
   /* ── 내비 토글 ── */
@@ -112,7 +111,8 @@
   /* ── 폼 제출 ── */
   const form = $("#applyForm"), noteEl = $("#formNote"), submitBtn = $("#submitBtn");
   const doneBox = $("#doneBox");
-  function note(msg, ok = false) { noteEl.innerHTML = msg; noteEl.classList.toggle("ok", ok); }
+  let sending = false;
+  function note(msg, ok = false) { noteEl.textContent = msg; noteEl.classList.toggle("ok", ok); }
 
   function validate() {
     let first = null;
@@ -147,53 +147,26 @@
     data.style = (data.style || []).join(", ");
     ["agreeSelf", "agreePortrait", "agreePrivacy", "agreeAge", "agreeNews"].forEach(k => data[k] = fd.get(k) ? "Y" : "N");
     data.photos = Object.entries(photos).map(([key, p]) => ({ key, name: p.name, type: p.type, dataUrl: p.dataUrl }));
-    data.userAgent = navigator.userAgent;
-    data.page = location.href;
     data.submittedAt = new Date().toISOString();
     return data;
   }
 
-  function buildMailFallback(data) {
-    const body = [
-      "[THE PIT application]", "",
-      `Name/nickname: ${data.name}`, `Email: ${data.email}`, `Country: ${data.country}`, `Age group: ${data.ageGroup}`,
-      `Social: ${data.sns}`, "",
-      `One-line intro: ${data.headline}`, `Color: ${data.color}`, `Style: ${data.style}`, `Place: ${data.place}`, `To Golky: ${data.toGolky}`,
-      `Height: ${data.height}`, `Size: ${data.size}`, "",
-      "My story:", data.story, "",
-      "* Please attach your face photo and full-body photo to this email.",
-      "* Confirmed: photos are of me / consent to character creation & publication / privacy policy / age 14+ (guardian consent if under 19)",
-    ].join("\n");
-    return `mailto:${CFG.CONTACT_EMAIL}?subject=${encodeURIComponent("[THE PIT] Application - " + data.name)}&body=${encodeURIComponent(body)}`;
-  }
-
   form.addEventListener("submit", async e => {
     e.preventDefault();
-    if (form.website.value) return; // 봇
+    if (sending || form.website.value) return; // 중복 전송 / 봇
     const err = validate();
     if (err) return note(err);
     const data = collect();
 
-    if (!CFG.SUBMIT_ENDPOINT) {
-      note(`Online submissions are almost ready. For now, <a href="${buildMailFallback(data)}">apply by email</a> and attach your two photos.`, true);
-      return;
-    }
-
-    submitBtn.disabled = true; submitBtn.textContent = "Turning the key…"; note("");
+    sending = true; submitBtn.disabled = true; submitBtn.textContent = "Sending your application…"; note("");
     try {
-      const res = await fetch(CFG.SUBMIT_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" }, // Apps Script CORS 프리플라이트 회피
-        body: JSON.stringify(data),
-      });
-      const out = await res.json().catch(() => ({}));
-      if (!res.ok || out.ok === false) throw new Error(out.error || "server error");
+      await window.THEPIT_DELIVERY.send(data, "application", CFG);
       form.hidden = true; doneBox.hidden = false;
       doneBox.scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (err) {
-      note(`Something went wrong (${err.message}). Please try again in a moment, or <a href="${buildMailFallback(data)}">apply by email</a>.`);
+      note(err.message || "Could not confirm delivery. Your entries have been kept. Please try again later.");
     } finally {
-      submitBtn.disabled = false; submitBtn.textContent = "🔑 Receive the key · Submit application";
+      sending = false; submitBtn.disabled = false; submitBtn.textContent = "🔑 Receive the key · Submit application";
     }
   });
 

@@ -1,0 +1,30 @@
+[hidden] { display: none !important; }
+.contact-nav { display: flex; gap: 24px; font-size: .85rem; }
+.contact-page { display: grid; grid-template-columns: .85fr 1.15fr; gap: 70px; padding-top: 70px; padding-bottom: 70px; align-items: start; }
+.contact-heading { padding-top: 22px; }
+.contact-heading h1 { font-size: clamp(2rem, 4vw, 3.1rem); line-height: 1.35; letter-spacing: -.05em; margin: 14px 0 24px; }
+.contact-heading > p:last-child { font-size: .93rem; color: var(--cream-2); line-height: 1.9; word-break: keep-all; }
+.contact-panel { background: var(--ink-2); border: 1px solid #ffffff18; border-radius: 20px; padding: 30px; min-width: 0; }
+.contact-panel .row { gap: 18px; }
+.contact-panel .field { min-width: 0; margin-bottom: 20px; }
+.contact-panel input, .contact-panel textarea, .contact-panel select, .contact-panel button { font: inherit; }
+.contact-panel .field small, .contact-fine { color: var(--fog); font-size: .72rem; }
+.contact-panel .check { margin-top: 10px; font-size: .78rem; line-height: 1.7; word-break: keep-all; }
+.contact-panel .check a { text-decoration: underline; text-underline-offset: 3px; }
+.contact-note { min-height: 1.5em; font-size: .8rem; color: #ffa7a7; word-break: keep-all; }
+.contact-fine { text-align: center; margin: 16px 0 0; line-height: 1.8; }
+.contact-done { padding: 50px 8px; text-align: center; }
+.contact-done > span { display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 24px; border-radius: 50%; background: #f5b94216; color: var(--gold); font-size: 1.8rem; }
+.contact-done h2 { font-size: 1.5rem; }
+.contact-done p { color: var(--fog); margin: 16px 0 30px; }
+#contactAgain { display: block; margin: 20px auto 0; border: 0; background: transparent; color: var(--cream-2); cursor: pointer; font-size: .8rem; }
+.contact-footer { border-top: 1px solid #ffffff15; padding: 28px 20px; text-align: center; font-size: .75rem; color: var(--fog); }
+@media (max-width: 800px) {
+  .contact-page { grid-template-columns: 1fr; gap: 26px; padding-top: 30px; padding-bottom: 40px; }
+  .contact-heading { padding-top: 0; }
+  .contact-panel { padding: 24px 20px; }
+}
+@media (max-width: 480px) {
+  .contact-nav { gap: 16px; font-size: .75rem; }
+  .contact-panel .row { grid-template-columns: 1fr; gap: 0; }
+}
