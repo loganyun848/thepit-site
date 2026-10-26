@@ -8,6 +8,7 @@ test('Turnstile is created for only the two production domains and an existing w
   assert.deepEqual(stored.domains,['the-pit.site','www.the-pit.site']);assert.equal(stored.clearance_level,'no_clearance');
   const second=await ensureWidget('account','test-token',network);assert.equal(second.siteKey,first.siteKey);assert.equal(calls.filter(c=>c.init.method==='POST').length,1);
   assert.ok(LOGIN_SCOPES.includes('challenge-widgets.write'));assert.ok(!LOGIN_SCOPES.some(s=>s.includes('email')));
+  assert.ok(!LOGIN_SCOPES.includes('offline_access'),'Wrangler appends its reserved refresh scope automatically');
 });
 test('Setup writes only the validated public endpoint and site key',()=>{
   const source='TRYON_ENDPOINT: "",\nTRYON_TURNSTILE_SITE_KEY: "",\nFORM_ENDPOINT: "keep"';

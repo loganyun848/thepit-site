@@ -8,7 +8,8 @@ const root = path.resolve(__dirname, '..');
 const backend = path.join(root, 'backend/tryon');
 const cli = path.join(backend, 'node_modules/wrangler/bin/wrangler.js');
 const PORT = 8767, HOST = `127.0.0.1:${PORT}`, ORIGIN = `http://${HOST}`;
-const LOGIN_SCOPES = ['account:read','user:read','workers:write','workers_scripts:write','challenge-widgets.write','offline_access'];
+// Wrangler adds offline_access itself; passing it through --scopes is rejected by the CLI.
+const LOGIN_SCOPES = ['account:read','user:read','workers:write','workers_scripts:write','challenge-widgets.write'];
 
 async function ensureWidget(account, authToken, network = fetch) {
   const base = 'https://api.cloudflare.com/client/v4/accounts/'+account+'/challenges/widgets';
