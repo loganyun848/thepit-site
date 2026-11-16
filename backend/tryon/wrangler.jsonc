@@ -6,7 +6,8 @@
   "workers_dev": true,
   "vars": {
     "ALLOWED_ORIGINS": "https://the-pit.site,https://www.the-pit.site",
-    "DAILY_LIMIT": "10"
+    "DAILY_LIMIT": "50",
+    "VISITOR_DAILY_LIMIT": "50"
   },
   "durable_objects": { "bindings": [{ "name": "TRYON_GATE", "class_name": "TryOnGate" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TryOnGate"] }],

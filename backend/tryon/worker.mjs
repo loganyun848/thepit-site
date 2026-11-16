@@ -6,6 +6,10 @@ const CHARACTER_URL = 'https://fal.run/fal-ai/flux-2-pro/edit';
 const MAX_INPUT = 12 * 1024 * 1024;
 const fail = (status, message, details = {}) => Object.assign(new Error(message), { status, ...details });
 const json = (data, status = 200, headers = {}) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers } });
+function quotaLimits(env) {
+  const limit = (value, fallback) => Number.isInteger(Number(value)) && Number(value) > 0 ? Math.min(1000, Number(value)) : fallback;
+  return { daily: limit(env.DAILY_LIMIT, 10), visitor: limit(env.VISITOR_DAILY_LIMIT, 5) };
+}
 function origins(env) { return String(env.ALLOWED_ORIGINS || 'https://the-pit.site,https://www.the-pit.site').split(',').map(value => value.trim()).filter(Boolean); }
 function imageType(bytes) {
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
@@ -40,7 +44,7 @@ export function createHandler(network = fetch) {
     if (origin && !allowed.includes(origin)) return json({ ok: false, error: '허용되지 않은 사이트입니다.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const ready = !!(env.FAL_KEY && env.TURNSTILE_SECRET && env.TRYON_GATE);
-    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character'], revision:'20261116-quota2' }, 200, cors);
+    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character'], revision:'20261116-photo-fetch' }, 200, cors);
     if (!['/tryon', '/character'].includes(url.pathname) || request.method !== 'POST') return json({ ok: false, error: '찾을 수 없는 요청입니다.' }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ ok: false, error: '웹사이트에서 다시 요청해 주세요.' }, 403, cors);
     if (!ready) return json({ ok: false, error: '가상착용 AI 연결을 준비하고 있습니다.' }, 503, cors);
@@ -70,7 +74,9 @@ export function createHandler(network = fetch) {
         input = { prompt, image_urls: [photo, original, STYLE_REFERENCE], image_size: { width: 864, height: 1152 }, sync_mode: true, output_format: 'jpeg', enable_safety_checker: true, safety_tolerance: '2' };
       } else {
         // The garment URL comes exclusively from our catalog, never from an arbitrary client URL.
-        const garmentResponse = await network(item.image, { signal: AbortSignal.timeout(15000), redirect: 'error' });
+        // Workers supports manual/follow, not redirect:error. Reject 3xx via ok
+        // instead of following a redirect beyond the trusted catalog source.
+        const garmentResponse = await network(item.image, { signal: AbortSignal.timeout(15000), redirect: 'manual' });
         if (!garmentResponse.ok) throw fail(502, '선택한 상품 사진을 불러오지 못했습니다. 다른 상품을 선택해 주세요.');
         const garmentBytes = await readBytes(garmentResponse.body, 4 * 1024 * 1024), mime = imageType(garmentBytes);
         if (!mime) throw fail(502, '선택한 상품 사진 형식을 확인할 수 없습니다.');
@@ -83,7 +89,7 @@ export function createHandler(network = fetch) {
         const retryAfter = Math.max(1, Number(limit.retryAfter) || 60);
         const messages = {
           COOLDOWN: `연속 요청을 방지하기 위해 ${retryAfter}초 후 다시 생성할 수 있습니다.`,
-          VISITOR_DAILY_LIMIT: '오늘 이용 가능한 생성 횟수(5회)에 도달했습니다. 한국 시간 오전 9시에 초기화됩니다.',
+          VISITOR_DAILY_LIMIT: `오늘 이용 가능한 생성 횟수(${quotaLimits(env).visitor}회)에 도달했습니다. 한국 시간 오전 9시에 초기화됩니다.`,
           DAILY_LIMIT: '오늘 서비스 전체 생성 한도에 도달했습니다. 한국 시간 오전 9시에 초기화됩니다.',
           DUPLICATE_REQUEST: '이미 접수한 요청입니다. 결과를 기다린 후 다시 시도해 주세요.',
         };
@@ -129,7 +135,7 @@ export class TryOnGate {
     const { visitor, requestId, stage = 'tryon' } = await request.json(), now = Date.now(), day = new Date(now).toISOString().slice(0,10);
     const action = new URL(request.url).pathname;
     if (!['/permit','/release'].includes(action)) return json({allowed:false},404);
-    const dailyLimit = Math.max(1, Math.min(1000, Number(this.env.DAILY_LIMIT) || 10));
+    const { daily: dailyLimit, visitor: visitorLimit } = quotaLimits(this.env);
     const response = await this.ctx.storage.transaction(async txn => {
       let state = await txn.get('quota');
       if (!state || state.day !== day) state = { day, count: 0, visitors: {}, requests: [], reservations: {} };
@@ -151,7 +157,7 @@ export class TryOnGate {
       const resetAfter = Math.ceil((Date.parse(day+'T00:00:00Z') + 86400000 - now) / 1000);
       if (state.requests.includes(requestId)) return json({allowed:false,code:'DUPLICATE_REQUEST',retryAfter:60},409);
       if (state.count >= dailyLimit) return json({allowed:false,code:'DAILY_LIMIT',retryAfter:resetAfter},429);
-      if (previous.count >= 5) return json({allowed:false,code:'VISITOR_DAILY_LIMIT',retryAfter:resetAfter},429);
+      if (previous.count >= visitorLimit) return json({allowed:false,code:'VISITOR_DAILY_LIMIT',retryAfter:resetAfter},429);
       if (now - (previous.last[stage] || 0) < 60000) return json({allowed:false,code:'COOLDOWN',retryAfter:Math.ceil((60000 - (now - previous.last[stage]))/1000)},429);
       state.count++; state.requests.push(requestId); state.visitors[visitor] = { count: previous.count + 1, last: { ...previous.last, [stage]: now } };
       state.reservations[requestId] = {visitor,stage,at:now,released:false};

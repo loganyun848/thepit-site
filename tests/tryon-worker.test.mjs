@@ -17,6 +17,8 @@ function networkStub(options={}) {
     if(url.includes('/siteverify')) return Response.json({success:!options.badToken,hostname:options.hostname||'the-pit.site',action:options.action||'fit-studio'});
     if(url.startsWith('https://fal.run/')) return options.providerError ? new Response(options.providerDetail || 'private debug secret', {status:options.providerError}) : Response.json({images:[{url:options.output||fixture}]});
     assert.ok(catalog.some(item=>item.image===url),'only catalog garment URLs are fetched');
+    assert.equal(init.redirect,'manual','Use the Workers-supported redirect mode and reject redirects without following them');
+    if(options.garmentRedirect)return new Response(null,{status:302,headers:{Location:'https://untrusted.example/photo.jpg'}});
     return new Response(Buffer.from(fixture.split(',')[1],'base64'),{headers:{'Content-Type':'image/png'}});
   };
   return {network,calls};
@@ -68,6 +70,12 @@ test('Quota denial prevents model invocation',async()=>{
   const {network,calls}=networkStub();
   const limited={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>new Response('{}',{status:429})})}};
   assert.equal((await createHandler(network)(request(),limited)).status,429);assert.ok(!calls.some(call=>call.url.startsWith('https://fal.run/')));
+});
+
+test('Redirected catalog photos are rejected before quota reservation or paid generation',async()=>{
+  let reserved=false;const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>{reserved=true;return Response.json({allowed:true})}})}};
+  const stub=networkStub({garmentRedirect:true});const response=await createHandler(stub.network)(request(),backed);
+  assert.equal(response.status,502);assert.equal(reserved,false);assert.ok(!stub.calls.some(call=>call.url.startsWith('https://fal.run/')));
 });
 test('Real model request uses both images, safe credentials, category and no body measurement metadata',async()=>{
   const {network,calls}=networkStub();const response=await createHandler(network)(request({...payload,chest:94,garment:'http://internal.example'}),env);
@@ -124,5 +132,29 @@ test('Uncertain provider failures keep the safety reservation while explicit rej
     const operations=[];const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async(url)=>{operations.push(url);return Response.json(url.endsWith('/release')?{released:true}:{allowed:true})}})}};
     const stub=networkStub({providerError});await createHandler(stub.network)(request(),backed);
     assert.equal(operations.some(url=>url.endsWith('/release')),providerError<500);
+  }
+});
+
+test('Configured testing allowance supports 20 full pairs plus 10 retries and still stops at 50',async(t)=>{
+  let now=Date.parse('2026-11-16T02:00:00Z');t.mock.method(Date,'now',()=>now);
+  const records=new Map();const storage={get:async key=>structuredClone(records.get(key)),put:async(key,value)=>records.set(key,structuredClone(value)),setAlarm:async()=>{}};
+  storage.transaction=async fn=>fn(storage);
+  const gate=new TryOnGate({storage},{DAILY_LIMIT:'50',VISITOR_DAILY_LIMIT:'50'});
+  for(let i=0;i<50;i++){
+    const response=await gate.fetch(new Request('https://gate/permit',{method:'POST',body:JSON.stringify({visitor:'tester',requestId:'test-'+i,stage:i%2?'character':'tryon'})}));
+    assert.equal(response.status,200);now+=61000;
+  }
+  const stopped=await gate.fetch(new Request('https://gate/permit',{method:'POST',body:JSON.stringify({visitor:'tester',requestId:'one-too-many'})}));
+  assert.equal(stopped.status,429);assert.equal((await stopped.json()).code,'DAILY_LIMIT');assert.equal(records.get('quota').count,50);
+});
+
+test('Missing or malformed visitor allowance retains the default five-request cap',async(t)=>{
+  let now=Date.parse('2026-11-16T02:00:00Z');t.mock.method(Date,'now',()=>now);
+  for(const value of [undefined,'0','-1','invalid','3.5']){
+    const records=new Map();const storage={get:async key=>structuredClone(records.get(key)),put:async(key,data)=>records.set(key,structuredClone(data)),setAlarm:async()=>{}};
+    storage.transaction=async fn=>fn(storage);const gate=new TryOnGate({storage},{DAILY_LIMIT:'50',VISITOR_DAILY_LIMIT:value});
+    for(let i=0;i<5;i++){assert.equal((await gate.fetch(new Request('https://gate/permit',{method:'POST',body:JSON.stringify({visitor:'tester',requestId:'test-'+i})}))).status,200);now+=61000;}
+    const result=await gate.fetch(new Request('https://gate/permit',{method:'POST',body:JSON.stringify({visitor:'tester',requestId:'sixth'})}));
+    assert.equal((await result.json()).code,'VISITOR_DAILY_LIMIT');
   }
 });
