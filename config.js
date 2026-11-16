@@ -23,8 +23,8 @@ window.THEPIT_CONFIG = {
 
   // AI 가상착용 서버와 공개 Turnstile 사이트 키. API 비밀 키는 여기에 넣지 마세요.
   // 연결 절차: backend/tryon/README.md (fal.ai + Cloudflare Worker)
-  TRYON_ENDPOINT: "",
-  TRYON_TURNSTILE_SITE_KEY: "",
+  TRYON_ENDPOINT: "https://thepit-tryon.loganyun848.workers.dev",
+  TRYON_TURNSTILE_SITE_KEY: "0x4AAAAAAGC8uiD23186MVzK",
 
   // 이번 회차 안내 (상단 공지 띠에 표시, 비우면 숨김)
   ROUND_NOTICE: "EP.1 now casting · One applicant is picked at random every episode",

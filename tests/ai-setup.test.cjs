@@ -1,6 +1,22 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const http=require('node:http');
-const {createServer,publicConfig,ensureWidget,deviceLoginDetails,loginFailureMessage,LOGIN_SCOPES,HOST,ORIGIN}=require('../scripts/connect-ai.cjs');
+const {createServer,publicConfig,ensureWidget,waitForReady,deviceLoginDetails,loginFailureMessage,LOGIN_SCOPES,HOST,ORIGIN}=require('../scripts/connect-ai.cjs');
+
+test('Readiness tolerates delayed Secret propagation, transient network and non-JSON responses',async()=>{
+  const responses=[()=>{throw Error('temporary network failure')},()=>new Response('deploying',{status:503}),()=>Response.json({ready:false,features:['tryon','character']}),()=>Response.json({ready:true,features:['character']}),()=>Response.json({ready:true,features:['tryon','character']})];
+  let calls=0,pauses=0;const progress=[];
+  const health=await waitForReady('https://thepit-tryon.owner.workers.dev',{attempts:5,network:async(url,options)=>{
+    assert.equal(url,'https://thepit-tryon.owner.workers.dev/health');assert.equal(options.headers.Origin,'https://the-pit.site');assert.equal(options.cache,'no-store');
+    return responses[calls++]();
+  },pause:async()=>{pauses++},onProgress:attempt=>progress.push(attempt)});
+  assert.equal(health.ready,true);assert.equal(calls,5);assert.equal(pauses,4);assert.deepEqual(progress,[1,2,3,4,5]);
+});
+
+test('Readiness stops after its retry budget without disclosing provider responses',async()=>{
+  let calls=0,pauses=0;
+  await assert.rejects(waitForReady('https://thepit-tryon.owner.workers.dev',{attempts:3,network:async()=>{calls++;return Response.json({ready:false,private:'do-not-display'})},pause:async()=>{pauses++}}),error=>error.message.includes('키를 다시 만들 필요 없이')&&!error.message.includes('do-not-display'));
+  assert.equal(calls,3);assert.equal(pauses,2);
+});
 
 test('Device login displays only a verified Cloudflare device URL and a user confirmation code',()=>{
   const output='To authorize Wrangler, please visit:\n https://dash.cloudflare.com/oauth2/device\n\nand enter the code:\n AB12-CD34\nYou have 5 minutes to approve this request.';

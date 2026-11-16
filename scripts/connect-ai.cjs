@@ -78,6 +78,21 @@ function run(command, args, { cwd = root, input = '', env = {}, onOutput } = {})
   });
 }
 
+// A successful deployment can reach the nearest edge before its new Secrets do.
+// Retry only the read-only health check; never repeat a paid generation request.
+async function waitForReady(endpoint, { network = fetch, attempts = 12, pause = ms => new Promise(resolve => setTimeout(resolve, ms)), onProgress } = {}) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    onProgress?.(attempt, attempts);
+    try {
+      const response = await network(endpoint + '/health', { headers: { Origin: 'https://the-pit.site' }, cache: 'no-store', signal: AbortSignal.timeout(5000) });
+      const health = await response.json();
+      if (response.ok && health.ready === true && ['tryon', 'character'].every(feature => health.features?.includes(feature))) return health;
+    } catch (_) { /* Deployment propagation may temporarily return an HTTP error or no response. */ }
+    if (attempt < attempts) await pause(5000);
+  }
+  throw Error('서버 배포와 비밀 키 등록 후 연결 확인이 지연되고 있습니다. 로그인이나 키를 다시 만들 필요 없이 서버 배포 상태를 확인해 주세요.');
+}
+
 async function connect(data, state) {
   let secretInput;
   try {
@@ -106,10 +121,7 @@ async function connect(data, state) {
     data.falKey = ''; data.turnstileSecret = '';
     await run(process.execPath, [cli,'secret','bulk'], { cwd: backend, env, input: secretInput });
     secretInput = '';
-    state.message = '서버 연결 상태를 확인하고 있습니다.';
-    const health = await fetch(endpoint+'/health', { signal: AbortSignal.timeout(15000) });
-    const ready = await health.json();
-    if (!health.ok || !ready.ready || !ready.features?.includes('character')) throw Error('서버가 아직 준비되지 않았습니다. 등록된 Secrets와 배포 상태를 확인해 주세요.');
+    await waitForReady(endpoint, { onProgress(attempt, total) { state.message = `서버와 비밀 키의 배포 반영을 확인하고 있습니다. (${attempt}/${total})`; } });
     const configPath = path.join(root, 'config.js'), htmlPath = path.join(root, 'fit.html');
     const config = await fs.readFile(configPath, 'utf8'), html = await fs.readFile(htmlPath, 'utf8');
     await fs.writeFile(configPath, publicConfig(config, endpoint, data.siteKey));
@@ -169,4 +181,4 @@ if (require.main === module) {
     server.listen(PORT,'127.0.0.1',()=>console.log('THE PIT AI 연결: '+ORIGIN+' (이 PC에서만 접근 가능)'));
   }).catch(()=>{console.error('먼저 npm ci --prefix backend/tryon 을 실행하세요.');process.exitCode=1});
 }
-module.exports = { createServer, publicConfig, ensureWidget, deviceLoginDetails, loginFailureMessage, LOGIN_SCOPES, HOST, ORIGIN };
+module.exports = { createServer, publicConfig, ensureWidget, waitForReady, deviceLoginDetails, loginFailureMessage, LOGIN_SCOPES, HOST, ORIGIN };
