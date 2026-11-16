@@ -998,3 +998,21 @@ body.dialog-open {
   .character-output .tryon-placeholder p { font-size:.8rem; }
   .studio-availability { font-size:.66rem; }
 }
+/* Production avatar workspace */
+.avatar-model-workspace{margin-top:64px;padding-top:48px;border-top:1px solid #35343b}
+.avatar-build-options{max-width:940px}.avatar-build-options .tryon-consent{margin:20px 0}
+.avatar-viewer-header{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#c8c5bf;font-size:13px;padding:24px 0 12px}
+.avatar-viewer-header>span:first-child{color:#ffc24a;font-weight:600}
+.avatar-viewer{height:640px;width:100%;border:1px solid #3b393e;border-radius:18px;background:radial-gradient(ellipse at center,#323037 0%,#19191e 70%);overflow:hidden}
+.avatar-viewer canvas{width:100%;height:100%;display:block;touch-action:none}
+.avatar-viewer-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.avatar-viewer-toolbar button,.avatar-camera-grid button{border:1px solid #414048;background:#202027;color:#e8e4dd;border-radius:10px;padding:12px 16px;cursor:pointer;font:inherit}
+.avatar-viewer-toolbar button[aria-pressed=true],.avatar-camera-grid button[aria-pressed=true]{border-color:#e5b04b;background:#342d20;color:#ffd272}
+.avatar-camera-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:28px 0}
+.avatar-camera-grid button{text-align:left}.avatar-camera-grid strong,.avatar-camera-grid small{display:block}
+.avatar-camera-grid strong{font-size:14px}.avatar-camera-grid small{font-size:12px;color:#aaa6b1;margin-top:6px}
+.avatar-export-row{display:flex;align-items:center;gap:24px;margin:24px 0}.avatar-export-row label{font-size:13px;flex-shrink:0}
+.avatar-export-row input{display:block;width:140px;margin-top:8px;background:#24232a;color:#fff;border:1px solid #48454d;border-radius:8px;padding:12px;font:inherit}
+.avatar-model-workspace [hidden]{display:none!important}
+@media(max-width:700px){.avatar-viewer{height:480px}.avatar-camera-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.avatar-export-row{display:block}.avatar-viewer-header{font-size:12px}.avatar-model-workspace{margin-top:40px;padding-top:32px}}
+@media(prefers-reduced-motion:reduce){.avatar-viewer{scroll-behavior:auto}}

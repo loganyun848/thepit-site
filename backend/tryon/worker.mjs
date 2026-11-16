@@ -1,5 +1,6 @@
 import CATALOG from './catalog.json' with { type: 'json' };
 import { CHARACTER_APPEARANCE, characterPrompt } from './character-style.mjs';
+import { submitModel, modelStatus, modelFile } from './avatar-model.mjs';
 
 const MODEL_URL = 'https://fal.run/fal-ai/fashn/tryon/v1.6';
 const CHARACTER_URL = 'https://fal.run/fal-ai/flux-2-pro/edit';
@@ -44,8 +45,8 @@ export function createHandler(network = fetch) {
     if (origin && !allowed.includes(origin)) return json({ ok: false, error: '허용되지 않은 사이트입니다.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const ready = !!(env.FAL_KEY && env.TURNSTILE_SECRET && env.TRYON_GATE);
-    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet'], characterAppearance: CHARACTER_APPEARANCE, revision:'20261116-photographic-avatar' }, 200, cors);
-    if (!['/tryon', '/character', '/character-view'].includes(url.pathname) || request.method !== 'POST') return json({ ok: false, error: '찾을 수 없는 요청입니다.' }, 404, cors);
+    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet', 'avatar-model'], characterAppearance: CHARACTER_APPEARANCE, revision:'20261117-avatar-production' }, 200, cors);
+    if (!['/tryon', '/character', '/character-view', '/character-model', '/character-model/status', '/character-model/file'].includes(url.pathname) || request.method !== 'POST') return json({ ok: false, error: '찾을 수 없는 요청입니다.' }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ ok: false, error: '웹사이트에서 다시 요청해 주세요.' }, 403, cors);
     if (!ready) return json({ ok: false, error: '가상착용 AI 연결을 준비하고 있습니다.' }, 503, cors);
     let reservation, releaseQuota = false;
@@ -53,16 +54,24 @@ export function createHandler(network = fetch) {
       if (!request.headers.get('Content-Type')?.startsWith('application/json')) throw fail(415, '올바른 형식으로 다시 요청해 주세요.');
       let data; try { data = JSON.parse(new TextDecoder().decode(await readBytes(request.body, MAX_INPUT))); } catch (error) { if (error.status) throw error; throw fail(400, '요청을 읽을 수 없습니다.'); }
       if (!data || typeof data !== 'object' || Array.isArray(data)) throw fail(400, '올바른 요청으로 다시 시도해 주세요.');
+      if (url.pathname === '/character-model/status') return json(await modelStatus(data.ticket,env,network),200,cors);
+      if (url.pathname === '/character-model/file') return await modelFile(data.ticket,data.format,env,network,cors);
       if (data.consent !== true) throw fail(400, '사진 전송 동의가 필요합니다.');
       const item = CATALOG.find(product => product.id === data.itemId);
       if (!item) throw fail(400, '카탈로그에서 옷을 다시 선택해 주세요.');
-      const photo = validatePhoto(data.photo);
+      const isModel = url.pathname === '/character-model';
+      let modelImages;
+      if (isModel) {
+        if (data.appearance !== CHARACTER_APPEARANCE || data.approved !== true || data.bodyConfirmed !== true || !Array.isArray(data.images) || data.images.length !== 4) throw fail(400,'정면·좌측면·후면·우측면 전신 4장을 확인하고 3D 생성에 동의해 주세요.');
+        modelImages = data.images.map(image => validatePhoto(image));
+      }
+      const photo = isModel ? modelImages[0] : validatePhoto(data.photo);
       const isView = url.pathname === '/character-view';
-      const isCharacter = url.pathname !== '/tryon';
+      const isCharacter = !isModel && url.pathname !== '/tryon';
       const original = isCharacter ? validatePhoto(data.original) : null;
       const face = isCharacter && data.face ? validatePhoto(data.face) : null;
       const anchor = isView ? validatePhoto(data.anchor) : null;
-      if (isView && (data.approved !== true || !Number.isInteger(data.view) || data.view < 1 || data.view > 15)) throw fail(400, '기준 캐릭터를 확인한 뒤 16방향 시트를 만들어 주세요.');
+      if (isView && (data.approved !== true || !Number.isInteger(data.view) || data.view < 1 || data.view > 3)) throw fail(400, '기준 캐릭터를 확인한 뒤 전신 기준 4방향을 만들어 주세요.');
       if (isView && data.appearance !== CHARACTER_APPEARANCE) throw fail(409, '실사 아바타 방식으로 변경되었습니다. 기존 결과를 저장하고 새로고침한 뒤 실사 정면 이미지를 먼저 만들어 주세요.', {code:'CHARACTER_VERSION_CHANGED'});
       const prompt = isCharacter ? characterPrompt(isView ? 'studio' : data.scene, { face: !!face, view: isView ? data.view : null }) : null;
       if (isCharacter && !prompt) throw fail(400, '캐릭터 배경을 목록에서 선택해 주세요.');
@@ -75,7 +84,9 @@ export function createHandler(network = fetch) {
       const visitor = [...new Uint8Array(hashed)].map(value => value.toString(16).padStart(2, '0')).join('');
       const gate = env.TRYON_GATE.get(env.TRYON_GATE.idFromName('global'));
       let input;
-      if (isCharacter) {
+      if (isModel) {
+        input = null;
+      } else if (isCharacter) {
         input = { prompt, image_urls: [original, ...(face ? [face] : []), photo, ...(anchor ? [anchor] : [])], image_size: { width: 768, height: 1024 }, sync_mode: true, output_format: 'jpeg', enable_safety_checker: true, safety_tolerance: '2' };
       } else {
         // The garment URL comes exclusively from our catalog, never from an arbitrary client URL.
@@ -87,7 +98,7 @@ export function createHandler(network = fetch) {
         if (!mime) throw fail(502, '선택한 상품 사진 형식을 확인할 수 없습니다.');
         input = { model_image: photo, garment_image: toDataURI(garmentBytes, mime), category: item.cat === 'bottom' ? 'bottoms' : 'tops', mode: 'quality', garment_photo_type: 'auto', num_samples: 1, sync_mode: true, output_format: 'jpeg', enable_safety_checker: true, moderation_level: 'conservative' };
       }
-      const permit = await gate.fetch('https://gate/permit', { method: 'POST', body: JSON.stringify({ visitor, requestId: data.requestId, stage: isView ? `character-view-${data.view}` : isCharacter ? 'character' : 'tryon' }) });
+      const permit = await gate.fetch('https://gate/permit', { method: 'POST', body: JSON.stringify({ visitor, requestId: data.requestId, stage: isModel ? 'avatar-model' : isView ? `character-view-${data.view}` : isCharacter ? 'character' : 'tryon' }) });
       if (!permit.ok) {
         if (![409,429].includes(permit.status)) throw fail(503, '생성 횟수 확인 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.', {code:'QUOTA_UNAVAILABLE'});
         const limit = await permit.json();
@@ -97,10 +108,12 @@ export function createHandler(network = fetch) {
           VISITOR_DAILY_LIMIT: `오늘 이용 가능한 생성 횟수(${quotaLimits(env).visitor}회)에 도달했습니다. 한국 시간 오전 9시에 초기화됩니다.`,
           DAILY_LIMIT: '오늘 서비스 전체 생성 한도에 도달했습니다. 한국 시간 오전 9시에 초기화됩니다.',
           DUPLICATE_REQUEST: '이미 접수한 요청입니다. 결과를 기다린 후 다시 시도해 주세요.',
+          MODEL_DAILY_LIMIT: '오늘의 3D 모델 생성 한도에 도달했습니다. 기존 작업은 결과 확인으로 조회할 수 있습니다.',
         };
         throw fail(permit.status, messages[limit.code] || '현재 생성 요청을 처리할 수 없습니다. 잠시 후 다시 시도해 주세요.', {code:messages[limit.code]?limit.code:'QUOTA_DENIED',retryAfter});
       }
       reservation = { gate, visitor, requestId: data.requestId };
+      if (isModel) return json(await submitModel(modelImages,env,network),202,cors);
       const response = await network(isCharacter ? CHARACTER_URL : MODEL_URL, { method: 'POST', signal: AbortSignal.timeout(120000), headers: {
         Authorization: `Key ${env.FAL_KEY}`, 'Content-Type': 'application/json', 'X-Fal-Store-IO': '0', 'X-Fal-Object-Lifecycle-Preference': JSON.stringify({ expiration_duration_seconds: 3600 }),
       }, body: JSON.stringify(input) });
@@ -121,7 +134,7 @@ export function createHandler(network = fetch) {
       const output = await response.json(); const image = validatePhoto(output.images?.[0]?.url, 10 * 1024 * 1024);
       return json({ ok: true, image, ...(isCharacter ? {appearance:CHARACTER_APPEARANCE} : {}), ...(isView ? {view:data.view} : {}) }, 200, cors);
     } catch (error) {
-      if (reservation && releaseQuota) {
+      if (reservation && (releaseQuota || error.releaseQuota)) {
         try {
           const released = await reservation.gate.fetch('https://gate/release', {method:'POST',body:JSON.stringify({visitor:reservation.visitor,requestId:reservation.requestId})});
           if (released.ok && (await released.json()).released === true) error.message += ' 이번 요청은 생성 횟수에서 차감하지 않습니다.';
@@ -161,6 +174,10 @@ export class TryOnGate {
       const previous = state.visitors[visitor] || { count: 0, last: {} };
       const resetAfter = Math.ceil((Date.parse(day+'T00:00:00Z') + 86400000 - now) / 1000);
       if (state.requests.includes(requestId)) return json({allowed:false,code:'DUPLICATE_REQUEST',retryAfter:60},409);
+      if (stage === 'avatar-model') {
+        const models = Object.values(state.reservations).filter(entry => entry.stage === stage && !entry.released);
+        if (models.length >= 10 || models.filter(entry => entry.visitor === visitor).length >= 3) return json({allowed:false,code:'MODEL_DAILY_LIMIT',retryAfter:resetAfter},429);
+      }
       if (state.count >= dailyLimit) return json({allowed:false,code:'DAILY_LIMIT',retryAfter:resetAfter},429);
       if (previous.count >= visitorLimit) return json({allowed:false,code:'VISITOR_DAILY_LIMIT',retryAfter:resetAfter},429);
       if (now - (previous.last[stage] || 0) < 60000) return json({allowed:false,code:'COOLDOWN',retryAfter:Math.ceil((60000 - (now - previous.last[stage]))/1000)},429);

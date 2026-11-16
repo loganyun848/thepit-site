@@ -8,8 +8,8 @@
     character: { button: "generateCharacter", cancel: "cancelCharacter", download: "downloadCharacter", image: "", token: "", widget: null },
   };
   const state = { version: 0, selection: null, ready: false, sheetReady: false, busy: false, controller: null, face: '', faceVersion: 0, faceLoading: false };
-  const sheet = { token: '', widget: null, images: Array(16).fill(''), refs: null, epoch: 0, exporting: false };
-  const viewNames = ['정면', '좌측 앞 22.5°', '좌측 앞 45°', '좌측 앞 67.5°', '좌측면', '좌측 뒤 112.5°', '좌측 뒤 135°', '좌측 뒤 157.5°', '뒷모습', '우측 뒤 202.5°', '우측 뒤 225°', '우측 뒤 247.5°', '우측면', '우측 앞 292.5°', '우측 앞 315°', '우측 앞 337.5°'];
+  const sheet = { token: '', widget: null, images: Array(4).fill(''), refs: null, epoch: 0, exporting: false };
+  const viewNames = ['정면 · 0°', '좌측면 · 90°', '뒷모습 · 180°', '우측면 · 270°'];
   const sceneNames = { studio: "실사 스튜디오", city: "야외 인물 사진", poster: "스튜디오 포트레이트" };
   let challengeScript;
   function status(kind, text) { $(kind + "Status").textContent = text; }
@@ -89,7 +89,7 @@
       const response = await fetch(endpoint + "/health", { signal: AbortSignal.timeout(10000), cache: "no-store" });
       const result = await response.json(); if (version !== state.version) return;
       state.ready = response.ok && result.ready === true && result.features?.includes("character");
-      state.sheetReady = state.ready && result.features?.includes('character-sheet') && result.characterAppearance === 'photographic-v1';
+      state.sheetReady = state.ready && result.features?.includes('character-sheet') && result.characterAppearance === 'production-avatar-v2';
       $("studioAvailability").textContent = state.ready ? "사이즈 비교 · AI 착용 미리보기 · 실사 아바타" : "사이즈 비교 이용 가능 · AI 서비스 준비 중";
       status("tryon", state.ready ? "사진 전송에 동의한 뒤 생성 버튼을 눌러 주세요. 생성에는 잠시 시간이 걸릴 수 있습니다." : "AI 서비스를 준비하고 있습니다. 잠시 후 다시 확인해 주세요.");
       status("character", state.ready ? "먼저 03단계에서 착용 이미지를 만들어 주세요." : "AI 서비스를 준비하고 있습니다. 연결이 완료되면 사용할 수 있습니다.");
@@ -147,7 +147,7 @@
         body: JSON.stringify({ photo, original, face, scene: isCharacter ? scene : undefined, itemId: selection.item.id, consent: true, token, requestId: crypto.randomUUID() }) });
       const result = await response.json(); if (version !== state.version) return;
       if (!response.ok || result.ok !== true || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(result.image || "")) throw Error(result.error || "이미지를 만들지 못했습니다. 사진을 확인한 후 다시 시도해 주세요.");
-      if (isCharacter && result.appearance !== 'photographic-v1') throw Error('실사 아바타 서비스 업데이트를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      if (isCharacter && result.appearance !== 'production-avatar-v2') throw Error('실사 아바타 서비스 업데이트를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       const image = new Image(); image.src = result.image; await image.decode(); if (version !== state.version) return;
       if (!isCharacter) {
         discard("character"); $("characterResultLabel").textContent = "생성 전";
@@ -164,7 +164,7 @@
         $("characterResultLabel").textContent = sceneNames[scene] + " · 실사 정면 기준";
         sheet.images[0] = result.image; sheet.refs = { photo, original, face, appearance: result.appearance, itemId: selection.item.id };
         $('sheetWorkspace').hidden = false; renderSheet();
-        status('sheet', state.sheetReady ? '실사 얼굴과 의상을 확인한 뒤 동의하면 나머지 15방향을 만들 수 있습니다.' : '16방향 생성 서버 업데이트가 필요합니다. 기준 이미지는 저장할 수 있습니다.');
+        status('sheet', state.sheetReady ? '실사 얼굴과 의상을 확인한 뒤 동의하면 나머지 3방향을 만들 수 있습니다.' : '전신 4방향 생성 서버 업데이트가 필요합니다. 기준 이미지는 저장할 수 있습니다.');
       }
       status(kind, name + "가 생성되었습니다. 얼굴·손·의상 디테일을 확인한 뒤 저장해 주세요.");
     } catch (error) {
@@ -181,16 +181,17 @@
     }
   }
   function resetSheet() {
-    sheet.epoch++; sheet.images = Array(16).fill(''); sheet.refs = null; sheet.exporting = false;
+    window.dispatchEvent(new CustomEvent('avatar:references', {detail:null}));
+    sheet.epoch++; sheet.images = Array(4).fill(''); sheet.refs = null; sheet.exporting = false;
     resetChallenge('sheet', true); $('sheetConsent').checked = false;
     $('sheetWorkspace').hidden = true; $('sheetGrid').replaceChildren();
-    $('generateSheet').textContent = '16방향 시트 만들기'; $('cancelSheet').hidden = true;
+    $('generateSheet').textContent = '전신 4방향 시트 만들기'; $('cancelSheet').hidden = true;
     if ($('sheetDialog').open) $('sheetDialog').close();
     $('sheetDialogImage').removeAttribute('src'); $('downloadView').removeAttribute('href');
   }
   function renderSheet(active = -1, failed = -1) {
     const count = sheet.images.filter(Boolean).length;
-    $('sheetCount').textContent = count + ' / 16'; $('sheetProgress').value = count;
+    $('sheetCount').textContent = count + ' / 4'; $('sheetProgress').value = count;
     $('sheetGrid').replaceChildren(...viewNames.map((label, i) => {
       const cell = document.createElement('button'); cell.type = 'button'; cell.className = 'sheet-cell';
       cell.disabled = !sheet.images[i]; cell.dataset.state = i === active ? 'busy' : i === failed ? 'error' : sheet.images[i] ? 'done' : 'waiting';
@@ -223,28 +224,29 @@
     let active = -1, failed = -1;
     try {
       const anchor = await preparePhoto(sheet.images[0]);
-      for (let i = 1; i < 16; i++) {
+      for (let i = 1; i < 4; i++) {
         if (version !== state.version || epoch !== sheet.epoch) return;
         if (controller.signal.aborted) throw new DOMException('Stopped', 'AbortError');
         if (sheet.images[i]) continue;
-        active = i; renderSheet(i); status('sheet', (i + 1) + '/16 · ' + viewNames[i] + ' 준비 중. 보안 확인이 나타나면 완료해 주세요.');
+        active = i; renderSheet(i); status('sheet', (i + 1) + '/4 · ' + viewNames[i] + ' 준비 중. 보안 확인이 나타나면 완료해 주세요.');
         const token = await waitSheetToken(controller.signal, version);
         if (version !== state.version || epoch !== sheet.epoch || controller.signal.aborted) throw new DOMException('Stopped', 'AbortError');
-        status('sheet', (i + 1) + '/16 · ' + viewNames[i] + ' 생성 중. 이 페이지를 열어 두세요.');
+        status('sheet', (i + 1) + '/4 · ' + viewNames[i] + ' 생성 중. 이 페이지를 열어 두세요.');
         const timeout = setTimeout(() => controller.abort(), 150000);
         try {
           const response = await fetch(endpoint + '/character-view', {method:'POST', headers:{'Content-Type':'application/json'}, signal:controller.signal,
             body:JSON.stringify({...refs, anchor, view:i, approved:true, consent:true, token, requestId:crypto.randomUUID()})});
           const result = await response.json();
           if (version !== state.version || epoch !== sheet.epoch) return;
-          if (!response.ok || result.ok !== true || result.appearance !== 'photographic-v1' || result.view !== i || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(result.image || '')) throw Error(result.error || '실사 방향 이미지를 확인하지 못했습니다.');
+          if (!response.ok || result.ok !== true || result.appearance !== 'production-avatar-v2' || result.view !== i || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(result.image || '')) throw Error(result.error || '실사 방향 이미지를 확인하지 못했습니다.');
           const img = new Image(); img.src = result.image; await img.decode();
           if (version !== state.version || epoch !== sheet.epoch) return;
           sheet.images[i] = result.image; renderSheet();
         } finally { clearTimeout(timeout); }
         resetChallenge('sheet');
       }
-      status('sheet', '16방향 생성 완료. 방향별 얼굴·의상을 확인하고 4×4 시트 또는 개별 이미지로 저장해 주세요.');
+      window.dispatchEvent(new CustomEvent('avatar:references', {detail:avatarReferences()}));
+      status('sheet', '전신 4방향 생성 완료. 전신·손·발·의상을 확인한 후 아래에서 3D 모델을 생성하세요. 기준 이미지는 개별 또는 2×2로 저장할 수 있습니다.');
     } catch (error) {
       if (version !== state.version || epoch !== sheet.epoch) return;
       failed = active;
@@ -252,7 +254,7 @@
     } finally {
       if (version === state.version && epoch === sheet.epoch) {
         state.busy = false; state.controller = null; $('cancelSheet').hidden = true;
-        $('generateSheet').textContent = sheet.images.every(Boolean) ? '16방향 생성 완료' : '남은 방향 이어 만들기';
+        $('generateSheet').textContent = sheet.images.every(Boolean) ? '전신 4방향 생성 완료' : '남은 방향 이어 만들기';
         resetChallenge('sheet'); renderSheet(-1, failed); buttons();
       }
     }
@@ -261,12 +263,12 @@
     if ($('downloadSheet').disabled) return;
     const epoch = sheet.epoch, sources = [...sheet.images]; sheet.exporting = true; buttons();
     try {
-      const canvas = document.createElement('canvas'); canvas.width = 3072; canvas.height = 4352;
+      const canvas = document.createElement('canvas'); canvas.width = 1536; canvas.height = 2176;
       const ctx = canvas.getContext('2d'); ctx.fillStyle = '#f6f3ee'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      for (let i = 0; i < 16; i++) {
+      for (let i = 0; i < 4; i++) {
         const img = new Image(); img.src = sources[i]; await img.decode();
         if (epoch !== sheet.epoch) return;
-        const x = (i % 4) * 768, y = Math.floor(i / 4) * 1088, scale = Math.min(768 / img.naturalWidth, 1024 / img.naturalHeight);
+        const x = (i % 2) * 768, y = Math.floor(i / 2) * 1088, scale = Math.min(768 / img.naturalWidth, 1024 / img.naturalHeight);
         const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
         ctx.drawImage(img, x + (768-w)/2, y + (1024-h)/2, w, h);
         ctx.fillStyle = '#202028'; ctx.font = '24px sans-serif'; ctx.textAlign = 'center';
@@ -275,7 +277,7 @@
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       if (epoch !== sheet.epoch) return;
       if (!blob) throw Error('시트 저장에 실패했습니다. 다시 눌러 주세요.');
-      const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = 'THE-PIT-character-sheet-16.png';
+      const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = 'THE-PIT-avatar-reference-4.png';
       document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) { if (epoch === sheet.epoch) status('sheet', error.message); }
     finally { if (epoch === sheet.epoch) { sheet.exporting = false; buttons(); } }
@@ -312,5 +314,6 @@
   $("tryonBack").addEventListener("click", () => { $("picks").scrollIntoView({ behavior: "smooth" }); $("picksTitle").focus({ preventScroll: true }); });
   $("nextCharacter").addEventListener("click", () => $("characterTitle").focus({ preventScroll: true }));
   if (endpoint && config.TRYON_TURNSTILE_SITE_KEY) $("studioAvailability").textContent = "사이즈 비교 · AI 연결 상태는 옷 선택 후 확인합니다";
-  window.FIT_TRYON = { open, clear };
+  function avatarReferences() { return sheet.images.every(Boolean) && sheet.refs ? {images:[...sheet.images],appearance:sheet.refs.appearance,itemId:sheet.refs.itemId,height:state.selection?.user?.height || 180} : null; }
+  window.FIT_TRYON = { open, clear, avatarReferences };
 })();

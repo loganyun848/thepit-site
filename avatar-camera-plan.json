@@ -1,0 +1,14 @@
+[
+  {"id":"front","label":"정면 · 전신","azimuth":0,"elevation":0,"framing":"body","purpose":"체형·의상 비율"},
+  {"id":"left","label":"좌측면 · 전신","azimuth":90,"elevation":0,"framing":"body","purpose":"몸통 두께·실루엣"},
+  {"id":"back","label":"후면 · 전신","azimuth":180,"elevation":0,"framing":"body","purpose":"등·의상 후면"},
+  {"id":"right","label":"우측면 · 전신","azimuth":270,"elevation":0,"framing":"body","purpose":"좌우 비대칭 확인"},
+  {"id":"left-three-quarter","label":"좌 3/4 · 전신","azimuth":45,"elevation":0,"framing":"body","purpose":"입체감·장면 합성"},
+  {"id":"right-three-quarter","label":"우 3/4 · 전신","azimuth":315,"elevation":0,"framing":"body","purpose":"반대편 장면 합성"},
+  {"id":"rear-three-quarter","label":"뒤 3/4 · 전신","azimuth":135,"elevation":0,"framing":"body","purpose":"뒷모습 동선"},
+  {"id":"face-front","label":"정면 · 얼굴","azimuth":0,"elevation":0,"framing":"face","purpose":"얼굴 닮음·눈·안경"},
+  {"id":"face-three-quarter","label":"좌 3/4 · 얼굴","azimuth":45,"elevation":0,"framing":"face","purpose":"얼굴 볼륨·윤곽"},
+  {"id":"face-profile","label":"좌측면 · 얼굴","azimuth":90,"elevation":0,"framing":"face","purpose":"코·턱·귀 실루엣"},
+  {"id":"high","label":"하이 앵글 · 20°","azimuth":45,"elevation":20,"framing":"body","purpose":"위에서 내려보는 숏"},
+  {"id":"low","label":"로우 앵글 · −15°","azimuth":315,"elevation":-15,"framing":"body","purpose":"아래에서 올려보는 숏"}
+]

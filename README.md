@@ -123,7 +123,7 @@ Apps Script 편집기에서 함수를 골라 ▶ 실행:
 4. 브랜드/의류 종류 필터, 카드에 추천 사이즈 표시
 5. 상품 선택 → 평소 사이즈/실측 결과 비교, 접을 수 있는 상세표, 공식몰 링크
 6. **다음 · 내 사진에 입어보기** → 원본과 AI 착용 결과 비교·저장
-7. **THE PIT 실사 아바타** → 원본 인물 우선 + 선택적 얼굴 근접 사진 → 실제 촬영 사진처럼 자연스러운 정면 생성·확인 → 22.5° 간격 16방향 시트(기준 1장 + 추가 15장) → 개별 이미지·4×4 PNG 저장. 피부·눈·머리카락·의상에 실사 기준 적용, 실제 품질은 결과별 확인 필요. 실패 시 완료분 유지 후 명시적 이어 만들기. 측후면은 AI 추정.
+7. **THE PIT 실사 아바타** → 원본 인물 + 선택적 얼굴 사진 → 정면 A 포즈 확인 → 좌측·후면·우측 기준 3장 추가 → 별도 동의 후 3D 메시 생성 → 360° 회전·촬영 카메라 12개·실제 `.blend` 및 원본 GLB 다운로드. 전신·손·발 확인 필수. AI 추정 형상이며 영화용 리깅·표정·정밀 신체 스캔은 미포함.
 
 사진으로 성별이나 치수를 판독하지 않습니다. 키·몸무게로 가슴둘레 94cm 등을 임의 추정하던 계산을 제거했습니다. 예를 들어 180cm·73kg·평소 상의 XL이면 **평소 사이즈 기준 XL**을 표시하고, 실측이 부족한 상태에서 확정 추천으로 표현하지 않습니다. 입력한 실측이 M을 가리키더라도 평소 XL과 충돌하면 두 결과를 비교하도록 안내합니다. 상의 XL을 하의에 자동 적용하지 않습니다.
 
@@ -158,3 +158,26 @@ node scripts/preview-fit.cjs
 ```
 
 미리보기 주소: http://127.0.0.1:8766/fit.html. 생성된 `fit-catalog.js`, `backend/tryon/catalog.json`을 함께 갱신하며, 데이터 변경 시 HTML의 자산 버전도 갱신합니다. 서버 카탈로그를 변경하면 Worker도 재배포합니다. 자동 테스트의 AI 응답은 대체 데이터이며, 실제 유료 모델을 호출하지 않습니다.
+
+
+## Avatar production pipeline (2026-11-17)
+
+- Image references: FLUX.2 Pro, `production-avatar-v2`, four orthogonal views at 0/90/180/270 degrees. Each non-front view uses the same approved front image plus original identity references. Only three additional image requests.
+- Reconstruction: `meshy/v7.1/multi-image-to-3d` through the existing fal key. Textured, PBR, 50,000 target triangles, A-pose, symmetry off. No automatic rigging/animation or paid retries.
+- The new model job is separately consented and limited to three jobs per visitor and ten site-wide per UTC day, within the existing shared 50-call ceiling. 3D billing is separate from image billing; current pricing is linked at the action.
+- Queue status/download access uses two-hour HMAC tickets. Credentials, photos and measurements are absent from tickets. Provider queue URLs and asset hosts are constrained. No model/photos are permanently stored by the Worker.
+- Browser viewer: pinned Three.js 0.180.0, local vendor files, MIT license. Orbit, zoom, front calibration, 12 camera presets and current-shot PNG. All cameras operate on one mesh, without further inference. Single front/profile/back sources do not establish unseen anatomy.
+- Native Blender export: `avatar-blend.mjs` writes mesh/UV datablocks and three packed PBR atlases into a script-free Blender 2.93 binary template. Tested by reopening the output in Blender. The project contains one static mesh, 12 cameras, three lights and metric scale. No rig/shape keys/animation. The original GLB is also downloadable unchanged.
+- The scene is normalized to 1.8 m internally, then scaled by the chosen project height on export. This scales the whole model; it does not reproduce measured body circumferences. Face cameras target approximately 90% of height, so hair, hats and non-human shapes may need manual framing.
+- Export supports ordinary glTF PBR meshes with up to 16 materials, 300,000 triangles, embedded textures and non-repeating UVs. UV seams are preserved; base color, roughness, metallic and normal are packed into atlases (up to 4096 px). Unsupported textured UV transforms or rigs prompt the user to save the original GLB instead. Source alpha/transmission and specialized material extensions are not reconstructed in the Blender atlas scene.
+- Source and generated images stay in tab memory. Changing references or leaving the page discards the local results. Save the files before leaving. Pausing status checks does not cancel provider processing.
+
+Template maintenance (run Blender commands with a locally installed Blender 2.93):
+
+```sh
+blender --background --python scripts/build-avatar-template.py
+python scripts/index-avatar-template.py
+node --test tests/avatar-model.test.mjs tests/avatar-blend.test.mjs backend/tryon/tests/avatar-studio.test.mjs
+```
+
+Schema references: [Meshy on fal](https://fal.ai/models/meshy/v7.1/multi-image-to-3d/api), [fal queue protocol](https://fal.ai/docs/documentation/model-apis/inference/queue).

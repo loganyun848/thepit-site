@@ -24,7 +24,7 @@ function setup({configured=true,infer}={}) {
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
   let next=0;const widgets=new Map();
   w.turnstile={render(_node,options){const id=next++;widgets.set(id,options);queueMicrotask(()=>options.callback('one-time-test-token'));return id},reset(id){widgets.get(id)?.callback('new-test-token')},remove(id){widgets.delete(id)}};
-  w.fetch=async(url,init)=>{calls.push({url,init});if(url.endsWith('/health'))return Response.json({ready:true,characterAppearance:'photographic-v1',features:['tryon','character','character-sheet']});return infer?infer(url,init):Response.json({ok:true,appearance:'photographic-v1',image,...(url.endsWith('/character-view')?{view:JSON.parse(init.body).view}:{})})};
+  w.fetch=async(url,init)=>{calls.push({url,init});if(url.endsWith('/health'))return Response.json({ready:true,characterAppearance:'production-avatar-v2',features:['tryon','character','character-sheet']});return infer?infer(url,init):Response.json({ok:true,appearance:'production-avatar-v2',image,...(url.endsWith('/character-view')?{view:JSON.parse(init.body).view}:{})})};
   w.eval(script);const $=id=>w.document.getElementById(id);
   async function consent(kind) {$(kind+'Consent').checked=true;$(kind+'Consent').dispatchEvent(new w.Event('change'));await until(()=>!$({tryon:'generateTryon',character:'generateCharacter',sheet:'generateSheet'}[kind]).disabled);}
   return {dom,w,$,calls,consent,drawings,labels,open:()=>w.FIT_TRYON.open(selection)};
@@ -54,7 +54,7 @@ test('Consent gates generation; successful try-on feeds the character stage with
 test('Late results from a replaced photo cannot reappear in the studio',async()=>{
   let finish;const s=setup({infer:()=>new Promise(resolve=>{finish=resolve})});try{
     s.open();await until(()=>!s.$('tryonConsent').disabled);await s.consent('tryon');s.$('generateTryon').click();await until(()=>!!finish);
-    s.w.FIT_TRYON.clear();finish(Response.json({ok:true,appearance:'photographic-v1',image}));await new Promise(setImmediate);
+    s.w.FIT_TRYON.clear();finish(Response.json({ok:true,appearance:'production-avatar-v2',image}));await new Promise(setImmediate);
     assert.equal(s.$('tryon').hidden,true);assert.equal(s.$('character').hidden,true);assert.equal(s.$('tryonResult').hasAttribute('src'),false);assert.equal(s.$('downloadTryon').hidden,true);
   }finally{s.dom.window.close()}
 });
@@ -75,19 +75,19 @@ test('A character response from the old server cannot unlock a photographic shee
   }finally{s.dom.window.close()}
 });
 
-test('Approval gates a sheet; exactly 15 requests share one anchor and produce 16 independently labelled cells',async()=>{
+test('Approval gates a sheet; exactly three requests share one anchor and produce four reconstruction references',async()=>{
   const s=setup();try{
-    await readySheet(s);assert.equal(s.$('generateSheet').disabled,true);assert.equal(s.$('downloadSheet').disabled,true);assert.equal(s.$('sheetGrid').children.length,16);
-    await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='16 / 16');await until(()=>s.$('cancelSheet').hidden);
-    const calls=s.calls.filter(c=>c.url.endsWith('/character-view'));assert.equal(calls.length,15);
-    assert.deepEqual(calls.map(c=>JSON.parse(c.init.body).view),Array.from({length:15},(_,i)=>i+1));
-    for(const c of calls){const data=JSON.parse(c.init.body);assert.equal(data.anchor,prepared(image));assert.equal(data.original,prepared(selection.photo));assert.equal(data.approved,true);assert.equal(data.appearance,'photographic-v1');assert.ok(data.token);}
-    assert.equal(new Set(calls.map(c=>JSON.parse(c.init.body).requestId)).size,15);
+    await readySheet(s);assert.equal(s.$('generateSheet').disabled,true);assert.equal(s.$('downloadSheet').disabled,true);assert.equal(s.$('sheetGrid').children.length,4);
+    await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='4 / 4');await until(()=>s.$('cancelSheet').hidden);
+    const calls=s.calls.filter(c=>c.url.endsWith('/character-view'));assert.equal(calls.length,3);
+    assert.deepEqual(calls.map(c=>JSON.parse(c.init.body).view),Array.from({length:3},(_,i)=>i+1));
+    for(const c of calls){const data=JSON.parse(c.init.body);assert.equal(data.anchor,prepared(image));assert.equal(data.original,prepared(selection.photo));assert.equal(data.approved,true);assert.equal(data.appearance,'production-avatar-v2');assert.ok(data.token);}
+    assert.equal(new Set(calls.map(c=>JSON.parse(c.init.body).requestId)).size,3);
     assert.equal(s.$('downloadSheet').disabled,false);assert.equal(s.$('generateSheet').disabled,true);
-    assert.equal(s.$('sheetGrid').querySelectorAll('img').length,16);
-    s.$('sheetGrid').children[8].click();assert.equal(s.$('sheetDialog').open,true);assert.match(s.$('sheetDialogTitle').textContent,/뒷모습/);
-    const before=s.calls.length;s.$('downloadSheet').click();await until(()=>s.labels.length===16);await until(()=>!s.$('downloadSheet').disabled);
-    assert.equal(s.calls.length,before,'compositing and download must not generate more images');assert.equal(s.labels[15].x,2688);assert.equal(s.labels[15].y,4328);
+    assert.equal(s.$('sheetGrid').querySelectorAll('img').length,4);
+    s.$('sheetGrid').children[2].click();assert.equal(s.$('sheetDialog').open,true);assert.match(s.$('sheetDialogTitle').textContent,/뒷모습/);
+    const before=s.calls.length;s.$('downloadSheet').click();await until(()=>s.labels.length===4);await until(()=>!s.$('downloadSheet').disabled);
+    assert.equal(s.calls.length,before,'compositing and download must not generate more images');assert.equal(s.labels[3].x,1152);assert.equal(s.labels[3].y,2152);
   }finally{s.dom.window.close()}
 });
 
@@ -95,30 +95,30 @@ test('Failed sheet stops immediately; explicit resume keeps completed images and
   let fail=true;const s=setup({infer:async(url,init)=>{
     const view=JSON.parse(init.body).view;
     if(url.endsWith('/character-view')&&view===3&&fail)return Response.json({ok:false,error:'테스트 중단'},{status:502});
-    return Response.json({ok:true,appearance:'photographic-v1',image,view});
+    return Response.json({ok:true,appearance:'production-avatar-v2',image,view});
   }});try{
     await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetStatus').textContent.includes('테스트 중단'));
-    assert.equal(s.$('sheetCount').textContent,'3 / 16');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,3);
-    assert.equal(s.$('downloadSheet').disabled,true);fail=false;s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='16 / 16');
+    assert.equal(s.$('sheetCount').textContent,'3 / 4');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,3);
+    assert.equal(s.$('downloadSheet').disabled,true);fail=false;s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='4 / 4');
     const views=s.calls.filter(c=>c.url.endsWith('/character-view')).map(c=>JSON.parse(c.init.body).view);
-    assert.deepEqual(views,[1,2,3,...Array.from({length:13},(_,i)=>i+3)]);
+    assert.deepEqual(views,[1,2,3,...Array.from({length:1},(_,i)=>i+3)]);
   }finally{s.dom.window.close()}
 });
 
 test('Replacing the selected person during a view request discards all previous sheet images and ignores late results',async()=>{
-  let finish;const s=setup({infer:async(url)=>url.endsWith('/character-view')?new Promise(resolve=>finish=resolve):Response.json({ok:true,appearance:'photographic-v1',image})});try{
+  let finish;const s=setup({infer:async(url)=>url.endsWith('/character-view')?new Promise(resolve=>finish=resolve):Response.json({ok:true,appearance:'production-avatar-v2',image})});try{
     await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>!!finish);
-    s.w.FIT_TRYON.open({...selection,photo:'blob:new-person'});finish(Response.json({ok:true,appearance:'photographic-v1',image,view:1}));await new Promise(setImmediate);
+    s.w.FIT_TRYON.open({...selection,photo:'blob:new-person'});finish(Response.json({ok:true,appearance:'production-avatar-v2',image,view:1}));await new Promise(setImmediate);
     assert.equal(s.$('sheetWorkspace').hidden,true);assert.equal(s.$('sheetGrid').children.length,0);assert.equal(s.$('characterResult').hasAttribute('src'),false);
     assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,1);
   }finally{s.dom.window.close()}
 });
 
 test('Cancellation preserves completed angles and does not start subsequent requests',async()=>{
-  let finish;const s=setup({infer:async(url)=>url.endsWith('/character-view')?new Promise(resolve=>finish=resolve):Response.json({ok:true,appearance:'photographic-v1',image})});try{
+  let finish;const s=setup({infer:async(url)=>url.endsWith('/character-view')?new Promise(resolve=>finish=resolve):Response.json({ok:true,appearance:'production-avatar-v2',image})});try{
     await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>!!finish);
-    s.$('cancelSheet').click();finish(Response.json({ok:true,appearance:'photographic-v1',image,view:1}));await until(()=>s.$('cancelSheet').hidden);
-    assert.equal(s.$('sheetCount').textContent,'2 / 16');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,1);assert.equal(s.$('generateSheet').disabled,false);
+    s.$('cancelSheet').click();finish(Response.json({ok:true,appearance:'production-avatar-v2',image,view:1}));await until(()=>s.$('cancelSheet').hidden);
+    assert.equal(s.$('sheetCount').textContent,'2 / 4');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,1);assert.equal(s.$('generateSheet').disabled,false);
   }finally{s.dom.window.close()}
 });
 

@@ -54,15 +54,15 @@ test('Character prioritizes original identity and never sends the unrelated anim
   assert.deepEqual(body.image_size,{width:768,height:1024});assert.equal(calls.length,2);
 });
 
-test('All fifteen angles reuse the approved anchor with original identity; client prompt cannot override directions',async()=>{
+test('All three orthogonal views reuse the approved anchor with original identity; client prompt cannot override directions',async()=>{
   const original=taggedFixture('original'),face=taggedFixture('face'),anchor=taggedFixture('anchor');
-  for(let view=1;view<16;view++){
+  for(let view=1;view<4;view++){
     const {network,calls}=networkStub();
-    const response=await createHandler(network)(request({...payload,original,face,anchor,approved:true,appearance:'photographic-v1',view,prompt:'override'},origin,'character-view'),env);
-    const result=await response.json();assert.equal(response.status,200);assert.equal(result.view,view);assert.equal(result.appearance,'photographic-v1');
+    const response=await createHandler(network)(request({...payload,original,face,anchor,approved:true,appearance:'production-avatar-v2',view,prompt:'override'},origin,'character-view'),env);
+    const result=await response.json();assert.equal(response.status,200);assert.equal(result.view,view);assert.equal(result.appearance,'production-avatar-v2');
     const model=JSON.parse(calls.find(call=>call.url.includes('/flux-2-pro/edit')).init.body);
     assert.deepEqual(model.image_urls,[original,face,fixture,anchor]);
-    assert.ok(model.prompt.includes(`orientation ${view*22.5} degrees`));assert.match(model.prompt,/Image 4 is the approved FRONT photographic reference/);
+    assert.ok(model.prompt.includes(`orientation ${view*90} degrees`));assert.match(model.prompt,/Image 4 is the approved FRONT photographic reference/);
     assert.match(model.prompt,/photorealistic live-action portrait photograph/);
     assert.match(model.prompt,/do not stylize the side or rear views/);
     assert.ok(!model.prompt.includes('override'));assert.equal(calls.length,2);
@@ -70,8 +70,8 @@ test('All fifteen angles reuse the approved anchor with original identity; clien
 });
 
 test('Missing approval, invalid direction or invalid reference is rejected before network or quota use',async()=>{
-  const base={...payload,original:fixture,anchor:fixture,approved:true,appearance:'photographic-v1',view:1};
-  for(const data of [{...base,approved:false},{...base,anchor:undefined},{...base,face:'https://untrusted.example/face.jpg'},...[0,16,-1,1.5,'1',null].map(view=>({...base,view}))]){
+  const base={...payload,original:fixture,anchor:fixture,approved:true,appearance:'production-avatar-v2',view:1};
+  for(const data of [{...base,approved:false},{...base,anchor:undefined},{...base,face:'https://untrusted.example/face.jpg'},...[0,4,16,-1,1.5,'1',null].map(view=>({...base,view}))]){
     const {network,calls}=networkStub();const response=await createHandler(network)(request(data,origin,'character-view'),env);
     assert.equal(response.status,400);assert.equal(calls.length,0);
   }
