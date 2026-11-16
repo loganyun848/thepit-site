@@ -32,6 +32,17 @@ test('Invalid email, invalid image and oversized attachments stop before deliver
   const dataUrl='data:image/jpeg;base64,'+Buffer.alloc(6*1024*1024).toString('base64');
   assert.throws(()=>delivery.toFormData({...contact,photos:[{dataUrl},{dataUrl}]},'application'),{code:'attachment-size'});
 });
+
+test('Fit Room applications include avatar context and each generated reference attachment', async () => {
+  const photos = ['body', 'avatar_front', 'avatar_left', 'avatar_back', 'avatar_right'].map(key => ({ key, dataUrl: 'data:image/jpeg;base64,YWJj' }));
+  const body = delivery.toFormData({ ...contact, source: 'Fit Room', avatarStage: '3D avatar ready', outfit: 'UNIQLO · Sweater · XL', referenceViews: 4, modelDelivery: '3D model generated; model file not attached', photos }, 'application');
+  assert.equal(body.get('Application source'), 'Fit Room');
+  assert.equal(body.get('Avatar reference count'), '4');
+  assert.equal(body.get('Selected outfit'), 'UNIQLO · Sweater · XL');
+  assert.equal(body.get('attachment2').name, 'avatar_front.jpg');
+  assert.equal(body.get('attachment5').name, 'avatar_right.jpg');
+  assert.equal(body.get('3D model delivery'), '3D model generated; model file not attached');
+});
 test('Unactivated addresses never produce a success screen', () => {
   for(const success of [true,'true',false]) assert.throws(()=>delivery.readResponse({success,message:'This form needs activation. Check your email.'},true,false),{code:'activation'});
 });

@@ -3,6 +3,14 @@
 사진과 이야기를 올리면, 무작위로 선정된 한 사람이 애니메이션의 주인공이 되는 참여형 홈페이지.
 빌드 도구 없이 HTML/CSS/JS만으로 동작하며 GitHub Pages에 그대로 올라갑니다.
 
+## Avatar completion → application
+
+The front avatar, completed four-view set and loaded 3D model each open the existing application form inside Fit Room (`fit.html#apply`). `fit-application.js` loads the form markup from Home, and `application-form.js` supplies the shared validation, photo handling and delivery behavior. No page reload occurs, so the current avatar viewer and downloads remain available. The Apply menu points to the in-page form once an avatar is ready.
+
+The form carries the original photo, optional face reference, height and selected size. The visible generated references and outfit information are added to the application only after the visitor fills in the required fields, checks application consent and submits. The 3D GLB/Blender file is not emailed; it remains available in the studio. No photos are written to browser storage. New source photos, outfits or front-avatar regeneration invalidate the linked avatar, clear auto-carried photos and reset application consent while keeping the written story. A form-load retry does not trigger AI generation.
+
+Validation: `node --test backend/tryon/tests/application-handoff.test.mjs tests/form-delivery.test.cjs` (local fixture images and responses; no paid generation or real mail delivery).
+
 ## Public website language
 
 All public pages, product display names, form feedback, generation status, privacy notices and API error messages use English. Turnstile is explicitly configured with `language: 'en'`. Custom upload buttons keep browser-localized file input labels out of the page.

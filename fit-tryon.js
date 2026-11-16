@@ -167,6 +167,7 @@
         status('sheet', state.sheetReady ? 'Check the face and outfit, then consent to generate the other three views.' : 'The four-view service needs an update. You can still save the front reference.');
       }
       status(kind, name + " is ready. Check the face, hands and outfit details before saving.");
+      if (isCharacter) window.dispatchEvent(new CustomEvent('avatar:application', { detail: applicationResult('front') }));
     } catch (error) {
       if (version !== state.version) return;
       $(kind + "ProgressTitle").textContent = "Generation could not be completed";
@@ -181,6 +182,7 @@
     }
   }
   function resetSheet() {
+    window.dispatchEvent(new CustomEvent('avatar:application', {detail:null}));
     window.dispatchEvent(new CustomEvent('avatar:references', {detail:null}));
     sheet.epoch++; sheet.images = Array(4).fill(''); sheet.refs = null; sheet.exporting = false;
     resetChallenge('sheet', true); $('sheetConsent').checked = false;
@@ -247,6 +249,7 @@
       }
       window.dispatchEvent(new CustomEvent('avatar:references', {detail:avatarReferences()}));
       status('sheet', 'All four views are ready. Check the body, hands, feet and outfit before generating a 3D model below. Save the references individually or as a 2×2 sheet.');
+      window.dispatchEvent(new CustomEvent('avatar:application', { detail: applicationResult('references') }));
     } catch (error) {
       if (version !== state.version || epoch !== sheet.epoch) return;
       failed = active;
@@ -316,5 +319,12 @@
   $("nextCharacter").addEventListener("click", () => $("characterTitle").focus({ preventScroll: true }));
   if (endpoint && config.TRYON_TURNSTILE_SITE_KEY) $("studioAvailability").textContent = "Size comparison · AI availability is checked after you choose an outfit";
   function avatarReferences() { return sheet.images.every(Boolean) && sheet.refs ? {images:[...sheet.images],appearance:sheet.refs.appearance,itemId:sheet.refs.itemId,height:state.selection?.user?.height || 180} : null; }
-  window.FIT_TRYON = { open, clear, avatarReferences };
+  function applicationResult(stage) {
+    if (!sheet.images[0] || !sheet.refs || !state.selection) return null;
+    const item = state.selection.item;
+    return { stage, images: [...sheet.images], original: sheet.refs.original, face: sheet.refs.face || '',
+      outfit: item.brand + ' · ' + item.name + ' · ' + $('tryonSize').value,
+      height: state.selection.user?.height || '', size: $('tryonSize').value };
+  }
+  window.FIT_TRYON = { open, clear, avatarReferences, applicationResult };
 })();

@@ -1023,3 +1023,18 @@ body.dialog-open {
 .photo-upload-control { border:0; background:transparent; color:inherit; font:inherit; width:100%; }
 .face-reference .face-upload-control { background:transparent; font:inherit; font-size:.85rem; }
 .photo-upload-control:focus-visible, .face-upload-control:focus-visible { outline:2px solid var(--gold); outline-offset:-4px; }
+/* The shared application stays in the same tab as the generated avatar. */
+.fit-application { scroll-margin-top: 90px; }
+.fit-application[hidden] { display: none; }
+.fit-application-summary { padding: 24px; margin: 32px 0; border: 1px solid rgba(245,185,66,.35); border-radius: 20px; background: rgba(245,185,66,.04); }
+.fit-application-summary h3 { margin: 0 0 10px; }
+.fit-application-summary > p { margin: 12px 0 20px; }
+.fit-application-images { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 16px; }
+.fit-application-images figure { margin: 0; max-width: 260px; }
+.fit-application-images img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: contain; background: #202027; border-radius: 12px; }
+.fit-application-images figcaption { padding: 8px 0; color: var(--muted); }
+.fit-application .container--narrow { width: min(100% - 40px, 860px); }
+.fit-application #fitApplyTitle:focus { outline: none; }
+.fit-application .fs, .fit-application .field, .fit-application .row { min-width: 0; }
+.fit-application .btn { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.fit-application .field input, .fit-application .field select, .fit-application .field textarea { min-width: 0; max-width: 100%; }

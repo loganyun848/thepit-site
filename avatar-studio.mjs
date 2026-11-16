@@ -66,6 +66,7 @@ async function loadModel(version){
   if(version!==epoch){loaded.dispose();return;}viewer=loaded;modelBuffer=buffer;
   $('avatarCameraGrid').replaceChildren(...plans.map(plan=>{const button=document.createElement('button');button.type='button';button.dataset.id=plan.id;button.setAttribute('aria-pressed',String(plan.id==='front'));const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=plan.label;small.textContent=plan.purpose;button.append(strong,small);button.addEventListener('click',()=>viewer?.shot(plan));return button;}));
   say('Your 3D model is ready. Drag to rotate or choose a camera preset. Save the .blend and original GLB before leaving this page.');buttons();
+  window.dispatchEvent(new CustomEvent('avatar:application', {detail:window.FIT_TRYON?.applicationResult('model')}));
 }
 function save(blob,filename){if(!blob)throw Error('The file could not be created.');const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 $('checkModel').addEventListener('click',()=>poll());
