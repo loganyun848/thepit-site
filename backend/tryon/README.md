@@ -2,7 +2,7 @@
 
 ## 현재 상태
 
-2026-11-16 기준 Cloudflare Worker 배포, FAL_KEY·TURNSTILE_SECRET 등록, 홈페이지용 공개 연결 값 설정 완료. 운영 서버 `/health`에서 착용·캐릭터 기능의 `ready: true` 확인. 이는 설정 존재 여부 확인이며 **fal.ai 키 유효성·잔액과 실제 생성 품질은 아직 미검증**. 사이즈 비교와 상품 탐색, 문의 접수는 별도로 작동합니다.
+2026-11-16 기준 Cloudflare Worker 배포, FAL_KEY·TURNSTILE_SECRET 등록, 홈페이지용 공개 연결 값 설정 완료. 운영 서버 `/health`에서 착용·캐릭터 기능의 `ready: true` 확인. 후속 진단에서 **두 모델 모두 fal.ai의 HTTP 403 잔액 부족 응답 확인 — 계정 크레딧 충전 필요**. 실제 이미지 생성과 품질은 충전 후 확인해야 합니다. 사이즈 비교와 상품 탐색, 문의 접수는 별도로 작동합니다.
 
 이 서버 하나에서 착용(FASHN v1.6)과 캐릭터(FLUX.2 Pro Edit)를 처리합니다. 모델마다 별도 계정을 만들 필요 없이 fal.ai 키 하나를 사용합니다. 프런트엔드는 GitHub Pages를 유지합니다.
 
@@ -78,7 +78,7 @@ AI 결과는 실제 상품 사이즈의 기장·품·착용감을 시뮬레이�
 ## 생성 비용과 제한
 
 - 하루 **전체 10회**, 방문자 IP 기반 **하루 5회**, 같은 단계는 **1분당 1회**로 제한합니다. 착용 후 캐릭터로 이어지는 요청은 즉시 가능합니다. UTC 00:00(한국 09:00)에 하루 기준이 바뀝니다.
-- 전체 한도는 `wrangler.jsonc`의 `DAILY_LIMIT`입니다. 1~1,000 범위이며 변경 후 배포합니다. 착용·캐릭터·재생성은 각각 1회입니다. 허용된 요청은 외부 생성 실패 시에도 한도에 포함됩니다.
+- 전체 한도는 `wrangler.jsonc`의 `DAILY_LIMIT`입니다. 1~1,000 범위이며 변경 후 배포합니다. 착용·캐릭터·재생성은 각각 1회입니다. 상품 사진 준비 후 횟수를 예약하고, 잔액·인증·권한·입력 문제나 제공자 429처럼 생성 전 명확하게 거절된 요청은 예약을 반환합니다. 시간 초과·통신 오류·제공자 5xx는 실제 과금 여부가 불명확하므로 안전 한도에 포함합니다. 반환한 요청 ID도 재전송 차단 목록에 유지합니다.
 - 이 한도는 금액 상한이 아닙니다. fal.ai에서 사용할 잔액과 비용 관리 설정을 함께 확인하세요. Cloudflare 요금/무료 할당량은 별도입니다.
 - 2026-10-26 확인: FASHN v1.6은 이미지당 $0.075, FLUX.2 Pro Edit는 첫 출력 MP $0.03와 추가 입력·출력 MP 과금으로 안내됩니다. 캐릭터는 입력 이미지 3장을 사용하므로 $0.03 고정 비용이 아닙니다. [착용 가격](https://fal.ai/models/fal-ai/fashn/tryon/v1.6), [캐릭터 가격](https://fal.ai/models/fal-ai/flux-2-pro/edit)에서 활성화 시점의 가격을 확인하세요.
 - 화면에서 대기 중단은 서버 생성/과금을 취소한다는 뜻이 아닙니다. 서버 120초, 브라우저 150초 제한을 사용하며 자동 재전송하지 않습니다. 결과 유실 후 자동 복구·작업 이력은 없습니다.
@@ -99,8 +99,12 @@ AI 결과는 실제 상품 사이즈의 기장·품·착용감을 시뮬레이�
 |---|---|
 | AI 연결 준비 중 | config.js 공개 값, Worker 배포, 두 Secrets, Durable Object 바인딩 |
 | 403 보안 확인 실패 | Turnstile 도메인, Site/Secret 키의 같은 위젯 여부, 만료된 토큰 |
-| 429 한도 도달 | 같은 단계 1분 제한 또는 전체/방문자 일일 횟수 |
-| 503 연결/잔액 | fal.ai 키의 유효성·생성 권한·잔액 |
+| 429 COOLDOWN | 같은 단계의 연속 요청 제한. 화면에 남은 대기 초 표시 |
+| 429 DAILY_LIMIT / VISITOR_DAILY_LIMIT | 전체/방문자 일일 횟수. 한국 시간 오전 9시 초기화 |
+| 409 DUPLICATE_REQUEST | 같은 요청 ID 재전송 차단 |
+| 503 PROVIDER_BALANCE | fal.ai 크레딧 충전 필요. 생성 전 거절된 예약 횟수 반환 |
+| 503 PROVIDER_AUTH / PROVIDER_PERMISSION | fal.ai 키의 인증·생성 권한·모델 접근 설정 |
+| 503 QUOTA_UNAVAILABLE | 횟수 관리 서버 오류. 일일 한도 초과와 구분 |
 | 422 사진 처리 불가 | 한 명의 정면 사진, 충분한 해상도, 가려진 신체/의상, 모델의 콘텐츠 제한 |
 | 502 또는 시간 초과 | fal 상태, 상품 사진 URL, 연결 상태. 자동 재시도하지 않음 |
 
@@ -111,6 +115,7 @@ AI 결과는 실제 상품 사이즈의 기장·품·착용감을 시뮬레이�
 ```powershell
 node --test tests/fit-sizing.test.cjs tests/form-delivery.test.cjs tests/tryon-worker.test.mjs
 node --test backend/tryon/tests/studio.test.mjs
+node --test backend/tryon/tests/gate-runtime.test.cjs
 npm run check --prefix backend/tryon
 node scripts/preview-fit.cjs
 ```

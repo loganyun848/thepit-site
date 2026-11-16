@@ -15,7 +15,7 @@ function networkStub(options={}) {
   const network=async(url,init={})=>{
     calls.push({url,init});
     if(url.includes('/siteverify')) return Response.json({success:!options.badToken,hostname:options.hostname||'the-pit.site',action:options.action||'fit-studio'});
-    if(url.startsWith('https://fal.run/')) return options.providerError ? new Response('private debug secret', {status:options.providerError}) : Response.json({images:[{url:options.output||fixture}]});
+    if(url.startsWith('https://fal.run/')) return options.providerError ? new Response(options.providerDetail || 'private debug secret', {status:options.providerError}) : Response.json({images:[{url:options.output||fixture}]});
     assert.ok(catalog.some(item=>item.image===url),'only catalog garment URLs are fetched');
     return new Response(Buffer.from(fixture.split(',')[1],'base64'),{headers:{'Content-Type':'image/png'}});
   };
@@ -67,7 +67,7 @@ test('Immediate try-on to character progression is allowed while repeat requests
 test('Quota denial prevents model invocation',async()=>{
   const {network,calls}=networkStub();
   const limited={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>new Response('{}',{status:429})})}};
-  assert.equal((await createHandler(network)(request(),limited)).status,429);assert.equal(calls.length,1);
+  assert.equal((await createHandler(network)(request(),limited)).status,429);assert.ok(!calls.some(call=>call.url.startsWith('https://fal.run/')));
 });
 test('Real model request uses both images, safe credentials, category and no body measurement metadata',async()=>{
   const {network,calls}=networkStub();const response=await createHandler(network)(request({...payload,chest:94,garment:'http://internal.example'}),env);
@@ -89,6 +89,40 @@ test('Durable gate enforces account cap, replay prevention and per-visitor coold
   const gate=new TryOnGate({storage},{DAILY_LIMIT:'2'});
   const permit=(visitor,id)=>gate.fetch(new Request('https://gate/permit',{method:'POST',body:JSON.stringify({visitor,requestId:id})}));
   assert.equal((await permit('a','one')).status,200);assert.equal((await permit('a','two')).status,429);
-  assert.equal((await permit('b','one')).status,429);assert.equal((await permit('b','two')).status,200);assert.equal((await permit('c','three')).status,429);
+  assert.equal((await permit('b','one')).status,409);assert.equal((await permit('b','two')).status,200);assert.equal((await permit('c','three')).status,429);
   assert.ok(alarm>Date.now());await gate.alarm();assert.equal(records.size,0);
+});
+
+test('fal exhausted-balance rejection is actionable and rolls back exactly one reservation',async()=>{
+  const records=new Map();const storage={get:async key=>structuredClone(records.get(key)),put:async(key,value)=>records.set(key,structuredClone(value)),setAlarm:async()=>{}};
+  storage.transaction=async fn=>fn(storage);const gate=new TryOnGate({storage},{DAILY_LIMIT:'10'});
+  const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:(url,init)=>gate.fetch(new Request(url,init))})}};
+  const failed=networkStub({providerError:403,providerDetail:'User is locked. Reason: Exhausted balance. Top up your balance. private debug secret'});
+  const response=await createHandler(failed.network)(request(),backed),body=await response.json();
+  assert.equal(response.status,503);assert.equal(body.code,'PROVIDER_BALANCE');assert.match(body.error,/잔액이 부족/);assert.match(body.error,/차감하지/);assert.ok(!JSON.stringify(body).includes('private debug'));
+  assert.equal(records.get('quota').count,0);assert.equal(Object.values(records.get('quota').visitors)[0].count,0);
+  const visitor=Object.keys(records.get('quota').visitors)[0];
+  await gate.fetch(new Request('https://gate/release',{method:'POST',body:JSON.stringify({visitor,requestId:payload.requestId})}));
+  assert.equal(records.get('quota').count,0);
+  const replay=await gate.fetch(new Request('https://gate/permit',{method:'POST',body:JSON.stringify({visitor,requestId:payload.requestId})}));assert.equal(replay.status,409);
+  const success=networkStub();assert.equal((await createHandler(success.network)(request({...payload,requestId:'22222222-2222-4222-8222-222222222222'}),backed)).status,200);
+  assert.equal(records.get('quota').count,1);
+});
+
+test('Quota cooldown, daily exhaustion and storage failures have distinct responses',async()=>{
+  for(const [code,status,retryAfter] of [['COOLDOWN',429,24],['DAILY_LIMIT',429,3600],['VISITOR_DAILY_LIMIT',429,3600],['DUPLICATE_REQUEST',409,60],['internal',500,undefined]]){
+    const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>Response.json({code,retryAfter},{status})})}};
+    const stub=networkStub();const response=await createHandler(stub.network)(request(),backed);const body=await response.json();
+    assert.equal(response.status,status===500?503:status);assert.equal(body.code,status===500?'QUOTA_UNAVAILABLE':code);
+    if(code==='COOLDOWN'){assert.match(body.error,/24초/);assert.equal(response.headers.get('Retry-After'),'24');}
+    assert.ok(!stub.calls.some(call=>call.url.startsWith('https://fal.run/')));
+  }
+});
+
+test('Uncertain provider failures keep the safety reservation while explicit rejections release it',async()=>{
+  for(const providerError of [400,401,402,403,422,429,500,504]){
+    const operations=[];const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async(url)=>{operations.push(url);return Response.json(url.endsWith('/release')?{released:true}:{allowed:true})}})}};
+    const stub=networkStub({providerError});await createHandler(stub.network)(request(),backed);
+    assert.equal(operations.some(url=>url.endsWith('/release')),providerError<500);
+  }
 });
