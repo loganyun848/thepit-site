@@ -1,5 +1,5 @@
 import CATALOG from './catalog.json' with { type: 'json' };
-import { characterPrompt } from './character-style.mjs';
+import { CHARACTER_APPEARANCE, characterPrompt } from './character-style.mjs';
 
 const MODEL_URL = 'https://fal.run/fal-ai/fashn/tryon/v1.6';
 const CHARACTER_URL = 'https://fal.run/fal-ai/flux-2-pro/edit';
@@ -44,7 +44,7 @@ export function createHandler(network = fetch) {
     if (origin && !allowed.includes(origin)) return json({ ok: false, error: '허용되지 않은 사이트입니다.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const ready = !!(env.FAL_KEY && env.TURNSTILE_SECRET && env.TRYON_GATE);
-    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet'], revision:'20261116-identity-sheet' }, 200, cors);
+    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet'], characterAppearance: CHARACTER_APPEARANCE, revision:'20261116-photographic-avatar' }, 200, cors);
     if (!['/tryon', '/character', '/character-view'].includes(url.pathname) || request.method !== 'POST') return json({ ok: false, error: '찾을 수 없는 요청입니다.' }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ ok: false, error: '웹사이트에서 다시 요청해 주세요.' }, 403, cors);
     if (!ready) return json({ ok: false, error: '가상착용 AI 연결을 준비하고 있습니다.' }, 503, cors);
@@ -63,6 +63,7 @@ export function createHandler(network = fetch) {
       const face = isCharacter && data.face ? validatePhoto(data.face) : null;
       const anchor = isView ? validatePhoto(data.anchor) : null;
       if (isView && (data.approved !== true || !Number.isInteger(data.view) || data.view < 1 || data.view > 15)) throw fail(400, '기준 캐릭터를 확인한 뒤 16방향 시트를 만들어 주세요.');
+      if (isView && data.appearance !== CHARACTER_APPEARANCE) throw fail(409, '실사 아바타 방식으로 변경되었습니다. 기존 결과를 저장하고 새로고침한 뒤 실사 정면 이미지를 먼저 만들어 주세요.', {code:'CHARACTER_VERSION_CHANGED'});
       const prompt = isCharacter ? characterPrompt(isView ? 'studio' : data.scene, { face: !!face, view: isView ? data.view : null }) : null;
       if (isCharacter && !prompt) throw fail(400, '캐릭터 배경을 목록에서 선택해 주세요.');
       if (!/^[a-f0-9-]{36}$/i.test(data.requestId || '') || typeof data.token !== 'string' || !data.token || data.token.length > 2048) throw fail(400, '보안 확인을 다시 진행해 주세요.');
@@ -118,7 +119,7 @@ export function createHandler(network = fetch) {
         throw fail(502, 'AI가 이미지를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.');
       }
       const output = await response.json(); const image = validatePhoto(output.images?.[0]?.url, 10 * 1024 * 1024);
-      return json({ ok: true, image, ...(isView ? {view:data.view} : {}) }, 200, cors);
+      return json({ ok: true, image, ...(isCharacter ? {appearance:CHARACTER_APPEARANCE} : {}), ...(isView ? {view:data.view} : {}) }, 200, cors);
     } catch (error) {
       if (reservation && releaseQuota) {
         try {

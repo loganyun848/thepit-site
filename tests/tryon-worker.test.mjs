@@ -47,6 +47,9 @@ test('Character prioritizes original identity and never sends the unrelated anim
   assert.deepEqual(body.image_urls,[fixture,fixture]);
   assert.match(body.prompt,/Preserve this exact outfit/);assert.match(body.prompt,/original photograph/);
   assert.match(body.prompt,/city street/);assert.ok(!body.prompt.includes('override'));
+  assert.match(body.prompt,/photorealistic live-action portrait photograph/);
+  assert.match(body.prompt,/skin with fine pores/);
+  assert.ok(!body.prompt.includes('lightly stylized 3D character'));
   assert.equal(body.sync_mode,true);assert.equal(body.enable_safety_checker,true);
   assert.deepEqual(body.image_size,{width:768,height:1024});assert.equal(calls.length,2);
 });
@@ -55,17 +58,19 @@ test('All fifteen angles reuse the approved anchor with original identity; clien
   const original=taggedFixture('original'),face=taggedFixture('face'),anchor=taggedFixture('anchor');
   for(let view=1;view<16;view++){
     const {network,calls}=networkStub();
-    const response=await createHandler(network)(request({...payload,original,face,anchor,approved:true,view,prompt:'override'},origin,'character-view'),env);
-    const result=await response.json();assert.equal(response.status,200);assert.equal(result.view,view);
+    const response=await createHandler(network)(request({...payload,original,face,anchor,approved:true,appearance:'photographic-v1',view,prompt:'override'},origin,'character-view'),env);
+    const result=await response.json();assert.equal(response.status,200);assert.equal(result.view,view);assert.equal(result.appearance,'photographic-v1');
     const model=JSON.parse(calls.find(call=>call.url.includes('/flux-2-pro/edit')).init.body);
     assert.deepEqual(model.image_urls,[original,face,fixture,anchor]);
-    assert.ok(model.prompt.includes(`orientation ${view*22.5} degrees`));assert.match(model.prompt,/Image 4 is the approved FRONT/);
+    assert.ok(model.prompt.includes(`orientation ${view*22.5} degrees`));assert.match(model.prompt,/Image 4 is the approved FRONT photographic reference/);
+    assert.match(model.prompt,/photorealistic live-action portrait photograph/);
+    assert.match(model.prompt,/do not stylize the side or rear views/);
     assert.ok(!model.prompt.includes('override'));assert.equal(calls.length,2);
   }
 });
 
 test('Missing approval, invalid direction or invalid reference is rejected before network or quota use',async()=>{
-  const base={...payload,original:fixture,anchor:fixture,approved:true,view:1};
+  const base={...payload,original:fixture,anchor:fixture,approved:true,appearance:'photographic-v1',view:1};
   for(const data of [{...base,approved:false},{...base,anchor:undefined},{...base,face:'https://untrusted.example/face.jpg'},...[0,16,-1,1.5,'1',null].map(view=>({...base,view}))]){
     const {network,calls}=networkStub();const response=await createHandler(network)(request(data,origin,'character-view'),env);
     assert.equal(response.status,400);assert.equal(calls.length,0);
@@ -75,6 +80,18 @@ test('Missing approval, invalid direction or invalid reference is rejected befor
 test('Missing original photo or unknown character scene is rejected before any paid request',async()=>{
   for(const data of [{...payload,scene:'studio'},{...payload,original:fixture,scene:'arbitrary scene'}]) {
     const {network,calls}=networkStub();assert.equal((await createHandler(network)(request(data,origin,'character'),env)).status,400);assert.equal(calls.length,0);
+  }
+});
+
+test('Stale character style is rejected before consuming captcha, quota or paid inference',async()=>{
+  for(const appearance of [undefined,'stylized-v1']){
+    let reserved=false;
+    const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>{reserved=true;return Response.json({allowed:true})}})}};
+    const {network,calls}=networkStub();
+    const data={...payload,original:fixture,anchor:fixture,approved:true,view:1,appearance};
+    const response=await createHandler(network)(request(data,origin,'character-view'),backed);
+    assert.equal(response.status,409);assert.equal((await response.json()).code,'CHARACTER_VERSION_CHANGED');
+    assert.equal(calls.length,0);assert.equal(reserved,false);
   }
 });
 

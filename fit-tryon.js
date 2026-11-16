@@ -10,7 +10,7 @@
   const state = { version: 0, selection: null, ready: false, sheetReady: false, busy: false, controller: null, face: '', faceVersion: 0, faceLoading: false };
   const sheet = { token: '', widget: null, images: Array(16).fill(''), refs: null, epoch: 0, exporting: false };
   const viewNames = ['정면', '좌측 앞 22.5°', '좌측 앞 45°', '좌측 앞 67.5°', '좌측면', '좌측 뒤 112.5°', '좌측 뒤 135°', '좌측 뒤 157.5°', '뒷모습', '우측 뒤 202.5°', '우측 뒤 225°', '우측 뒤 247.5°', '우측면', '우측 앞 292.5°', '우측 앞 315°', '우측 앞 337.5°'];
-  const sceneNames = { studio: "캐릭터 스튜디오", city: "색을 찾은 도시", poster: "나의 주인공 포스터" };
+  const sceneNames = { studio: "실사 스튜디오", city: "야외 인물 사진", poster: "스튜디오 포트레이트" };
   let challengeScript;
   function status(kind, text) { $(kind + "Status").textContent = text; }
   function buttons() {
@@ -48,7 +48,7 @@
     $('characterOriginal').removeAttribute('src');
     $("tryon").hidden = true; $("character").hidden = true; $("tryonOriginal").removeAttribute("src");
     $("nextCharacter").hidden = true; $("characterResultLabel").textContent = "생성 전";
-    $("characterProgressTitle").textContent = "먼저, 나를 닮은 정면 캐릭터.";
+    $("characterProgressTitle").textContent = "먼저, 사진처럼 자연스러운 나.";
     $("characterProgressCopy").textContent = "원본 얼굴과 선택한 옷을 기준으로 만듭니다.";
     buttons();
   }
@@ -83,14 +83,14 @@
       }
       buttons(); return;
     }
-    $("generateTryon").textContent = "내 사진에 착용 이미지 생성"; $("generateCharacter").textContent = "정면 기준 캐릭터 생성";
+    $("generateTryon").textContent = "내 사진에 착용 이미지 생성"; $("generateCharacter").textContent = "실사 정면 아바타 생성";
     status("tryon", "이미지 생성 서비스 연결을 확인하고 있습니다…");
     try {
       const response = await fetch(endpoint + "/health", { signal: AbortSignal.timeout(10000), cache: "no-store" });
       const result = await response.json(); if (version !== state.version) return;
       state.ready = response.ok && result.ready === true && result.features?.includes("character");
-      state.sheetReady = state.ready && result.features?.includes('character-sheet');
-      $("studioAvailability").textContent = state.ready ? "사이즈 비교 · AI 착용 미리보기 · 캐릭터 스튜디오" : "사이즈 비교 이용 가능 · AI 서비스 준비 중";
+      state.sheetReady = state.ready && result.features?.includes('character-sheet') && result.characterAppearance === 'photographic-v1';
+      $("studioAvailability").textContent = state.ready ? "사이즈 비교 · AI 착용 미리보기 · 실사 아바타" : "사이즈 비교 이용 가능 · AI 서비스 준비 중";
       status("tryon", state.ready ? "사진 전송에 동의한 뒤 생성 버튼을 눌러 주세요. 생성에는 잠시 시간이 걸릴 수 있습니다." : "AI 서비스를 준비하고 있습니다. 잠시 후 다시 확인해 주세요.");
       status("character", state.ready ? "먼저 03단계에서 착용 이미지를 만들어 주세요." : "AI 서비스를 준비하고 있습니다. 연결이 완료되면 사용할 수 있습니다.");
       buttons();
@@ -127,14 +127,14 @@
     if ($(stage.button).disabled || state.busy || !state.selection) return;
     const version = state.version, selection = state.selection, token = stage.token;
     const scene = document.querySelector('[name="characterScene"]:checked').value;
-    const isCharacter = kind === "character", name = isCharacter ? "캐릭터" : "착용 이미지";
+    const isCharacter = kind === "character", name = isCharacter ? "실사 아바타" : "착용 이미지";
     if (isCharacter) resetSheet();
     state.busy = true; buttons();
     const controller = new AbortController(); state.controller = controller;
     const timeout = setTimeout(() => controller.abort(), 150000);
     $(stage.cancel).hidden = false; $(kind + "ResultFrame").setAttribute("aria-busy", "true");
     $(kind + "ProgressTitle").textContent = name + "를 만들고 있어요";
-    $(kind + "ProgressCopy").textContent = isCharacter ? "얼굴형·안경·가르마를 원본 기준으로 유지하며 입체감을 더하고 있습니다." : "내 사진과 선택한 의상의 디자인을 합성하고 있습니다.";
+    $(kind + "ProgressCopy").textContent = isCharacter ? "원본의 얼굴 비율·피부결·머리카락·의상을 참고해 사진처럼 자연스럽게 만들고 있습니다." : "내 사진과 선택한 의상의 디자인을 합성하고 있습니다.";
     status(kind, "사진 준비 중…");
     try {
       const photo = await preparePhoto(isCharacter ? stages.tryon.image : selection.photo);
@@ -147,23 +147,24 @@
         body: JSON.stringify({ photo, original, face, scene: isCharacter ? scene : undefined, itemId: selection.item.id, consent: true, token, requestId: crypto.randomUUID() }) });
       const result = await response.json(); if (version !== state.version) return;
       if (!response.ok || result.ok !== true || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(result.image || "")) throw Error(result.error || "이미지를 만들지 못했습니다. 사진을 확인한 후 다시 시도해 주세요.");
+      if (isCharacter && result.appearance !== 'photographic-v1') throw Error('실사 아바타 서비스 업데이트를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.');
       const image = new Image(); image.src = result.image; await image.decode(); if (version !== state.version) return;
       if (!isCharacter) {
         discard("character"); $("characterResultLabel").textContent = "생성 전";
-        $("characterProgressTitle").textContent = "먼저, 나를 닮은 정면 캐릭터.";
+        $("characterProgressTitle").textContent = "먼저, 사진처럼 자연스러운 나.";
         $("characterProgressCopy").textContent = "지금 만든 착용 이미지와 원본 얼굴을 함께 참고합니다.";
         $("nextCharacter").hidden = false;
-        status("character", "착용 이미지가 준비됐습니다. 장면을 고르고 사진 전송에 동의한 뒤 캐릭터를 생성하세요.");
+        status("character", "착용 이미지가 준비됐습니다. 배경을 고르고 사진 전송에 동의한 뒤 실사 아바타를 생성하세요.");
       }
       stage.image = result.image; $(kind + "Result").src = result.image;
       $(kind + "Result").hidden = false; $(kind + "Placeholder").hidden = true;
       const ext = result.image.match(/^data:image\/(jpeg|png|webp)/)[1].replace("jpeg", "jpg");
       $(stage.download).href = result.image; $(stage.download).download = "THE-PIT-" + kind + "-" + selection.item.id + "." + ext; $(stage.download).hidden = false;
       if (isCharacter) {
-        $("characterResultLabel").textContent = sceneNames[scene] + " · 정면 기준";
-        sheet.images[0] = result.image; sheet.refs = { photo, original, face, itemId: selection.item.id };
+        $("characterResultLabel").textContent = sceneNames[scene] + " · 실사 정면 기준";
+        sheet.images[0] = result.image; sheet.refs = { photo, original, face, appearance: result.appearance, itemId: selection.item.id };
         $('sheetWorkspace').hidden = false; renderSheet();
-        status('sheet', state.sheetReady ? '얼굴과 의상을 확인한 뒤 동의하면 나머지 15방향을 만들 수 있습니다.' : '16방향 생성 서버 업데이트가 필요합니다. 기준 캐릭터는 저장할 수 있습니다.');
+        status('sheet', state.sheetReady ? '실사 얼굴과 의상을 확인한 뒤 동의하면 나머지 15방향을 만들 수 있습니다.' : '16방향 생성 서버 업데이트가 필요합니다. 기준 이미지는 저장할 수 있습니다.');
       }
       status(kind, name + "가 생성되었습니다. 얼굴·손·의상 디테일을 확인한 뒤 저장해 주세요.");
     } catch (error) {
@@ -194,7 +195,7 @@
       const cell = document.createElement('button'); cell.type = 'button'; cell.className = 'sheet-cell';
       cell.disabled = !sheet.images[i]; cell.dataset.state = i === active ? 'busy' : i === failed ? 'error' : sheet.images[i] ? 'done' : 'waiting';
       cell.setAttribute('aria-label', (i + 1) + '. ' + label + (sheet.images[i] ? ' 확대 및 저장' : ' 생성 대기'));
-      if (sheet.images[i]) { const img = document.createElement('img'); img.src = sheet.images[i]; img.alt = label + ' AI 캐릭터'; cell.append(img); }
+      if (sheet.images[i]) { const img = document.createElement('img'); img.src = sheet.images[i]; img.alt = label + ' 실사 AI 아바타'; cell.append(img); }
       else { const empty = document.createElement('span'); empty.className = 'sheet-empty'; empty.textContent = i === active ? '생성 중…' : i === failed ? '중단됨 · 이어 만들기' : '대기'; cell.append(empty); }
       const caption = document.createElement('small'); caption.textContent = String(i + 1).padStart(2, '0') + ' · ' + label; cell.append(caption);
       cell.addEventListener('click', () => {
@@ -236,7 +237,7 @@
             body:JSON.stringify({...refs, anchor, view:i, approved:true, consent:true, token, requestId:crypto.randomUUID()})});
           const result = await response.json();
           if (version !== state.version || epoch !== sheet.epoch) return;
-          if (!response.ok || result.ok !== true || result.view !== i || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(result.image || '')) throw Error(result.error || '방향 이미지를 확인하지 못했습니다.');
+          if (!response.ok || result.ok !== true || result.appearance !== 'photographic-v1' || result.view !== i || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(result.image || '')) throw Error(result.error || '실사 방향 이미지를 확인하지 못했습니다.');
           const img = new Image(); img.src = result.image; await img.decode();
           if (version !== state.version || epoch !== sheet.epoch) return;
           sheet.images[i] = result.image; renderSheet();
@@ -281,7 +282,7 @@
   }
   function faceChanged() {
     discard('character'); $('characterResultLabel').textContent = '얼굴 참고 변경 · 다시 생성 필요';
-    status('character', '얼굴 참고 사진이 바뀌었습니다. 전송에 동의한 뒤 기준 캐릭터를 다시 생성해 주세요.'); buttons();
+    status('character', '얼굴 참고 사진이 바뀌었습니다. 전송에 동의한 뒤 실사 정면 아바타를 다시 생성해 주세요.'); buttons();
   }
   $('characterFace').addEventListener('change', async () => {
     const file = $('characterFace').files[0], version = state.version, upload = ++state.faceVersion;
