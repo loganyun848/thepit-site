@@ -99,6 +99,7 @@
         input.classList.remove("invalid"); note("");
       } catch (err) { note(err.message); }
     }
+    $(".upload__box", box).addEventListener("click", () => input.click());
     input.addEventListener("change", () => setFile(input.files[0]));
     remove.addEventListener("click", () => {
       delete photos[key]; input.value = ""; pimg.src = ""; preview.hidden = true; box.classList.remove("has-file");

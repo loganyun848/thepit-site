@@ -15,7 +15,7 @@ test('The receiving endpoint is fixed to CEO; visitor email is only Reply-To', (
   assert.equal(body.get('_replyto'),'test@example.com');
   assert.equal(body.get('email'),'test@example.com');
   assert.equal(body.get('_cc'),null);
-  assert.match(body.get('_subject'),/^\[THE PIT 문의\]/);
+  assert.match(body.get('_subject'),/^\[THE PIT Contact\]/);
 });
 test('Every selected photo is a real attachment, not a base64 text field', async () => {
   const photos = ['face','body','extra1','extra2'].map(key=>({key,dataUrl:'data:image/jpeg;base64,YWJj'}));
@@ -49,7 +49,7 @@ test('Direct submission uses multipart and preserves application fields and atta
   });
   assert.equal(result.accepted,true);
   assert.equal(request.url,config.FORM_ENDPOINT);
-  assert.equal(request.options.body.get('이야기 / Story'),'Test story');
+  assert.equal(request.options.body.get('Story'),'Test story');
   assert.equal(request.options.headers['Content-Type'],undefined);
 });
 test('Network/invalid JSON errors do not create false positive submissions', async () => {

@@ -6,12 +6,12 @@ import { writeBlend } from './avatar-blend.mjs';
 
 export function embeddedGLB(buffer) {
   const d=new DataView(buffer);
-  if(buffer.byteLength<28 || d.getUint32(0,true)!==0x46546c67 || d.getUint32(4,true)!==2 || d.getUint32(8,true)!==buffer.byteLength || d.getUint32(16,true)!==0x4e4f534a)throw Error('올바른 GLB 모델이 아닙니다.');
+  if(buffer.byteLength<28 || d.getUint32(0,true)!==0x46546c67 || d.getUint32(4,true)!==2 || d.getUint32(8,true)!==buffer.byteLength || d.getUint32(16,true)!==0x4e4f534a)throw Error('This is not a valid GLB model.');
   const length=d.getUint32(12,true);
-  if(length>buffer.byteLength-20)throw Error('GLB 파일이 잘렸습니다.');
+  if(length>buffer.byteLength-20)throw Error('The GLB file is incomplete.');
   const doc=JSON.parse(new TextDecoder().decode(new Uint8Array(buffer,20,length)));
   // Do not let an imported model load arbitrary remote images or local resources.
-  for(const item of [...(doc.images||[]),...(doc.buffers||[])])if(item.uri && !/^data:(image\/(png|jpeg|webp)|application\/octet-stream);base64,/.test(item.uri))throw Error('외부 파일을 참조하는 모델은 원본 GLB로 내려받아 확인해 주세요.');
+  for(const item of [...(doc.images||[]),...(doc.buffers||[])])if(item.uri && !/^data:(image\/(png|jpeg|webp)|application\/octet-stream);base64,/.test(item.uri))throw Error('This model references external files. Download the original GLB to inspect it.');
   return doc;
 }
 export async function createAvatarViewer(container,buffer,{onCamera=()=>{}}={}) {
@@ -22,11 +22,11 @@ export async function createAvatarViewer(container,buffer,{onCamera=()=>{}}={}) 
   const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
-  container.replaceChildren(renderer.domElement);renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','3D 아바타. 드래그로 회전, 휠로 확대. 촬영 각도 버튼으로도 이동 가능.');
+  container.replaceChildren(renderer.domElement);renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','3D avatar. Drag to rotate, scroll to zoom, or choose a camera preset.');
   const scene=new THREE.Scene(), root=new THREE.Group();scene.add(root);
   const model=gltf.scene;model.updateMatrixWorld(true);
   const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-  if(!Number.isFinite(size.y)||size.y<.00001)throw Error('모델의 크기를 확인하지 못했습니다.');
+  if(!Number.isFinite(size.y)||size.y<.00001)throw Error('The model dimensions could not be determined.');
   const normalizer=new THREE.Group();normalizer.scale.setScalar(1.8/size.y);normalizer.position.set(-center.x*1.8/size.y,-box.min.y*1.8/size.y,-center.z*1.8/size.y);normalizer.add(model);root.add(normalizer);
   const hemi=new THREE.HemisphereLight(0xf6f7ff,0x575266,2.2);scene.add(hemi);
   for(const [color,intensity,pos] of [[0xfff3e4,3,[3,4,4]],[0xddeaff,2,[-3,2,1]],[0xffffff,2,[0,3,-3]]]){const light=new THREE.DirectionalLight(color,intensity);light.position.set(...pos);scene.add(light);}
@@ -47,14 +47,14 @@ export async function createAvatarViewer(container,buffer,{onCamera=()=>{}}={}) 
     controls.target.copy(target);controls.update();onCamera(plan);renderer.render(scene,camera);
   }
   controls.addEventListener('start',()=>{current=null;onCamera(null);});
-  shot({id:'front',label:'정면 · 전신',azimuth:0,elevation:0,framing:'body'});draw();
+  shot({id:'front',label:'Front · Full body',azimuth:0,elevation:0,framing:'body'});draw();
   return {
     shot,
     autoRotate(value){controls.autoRotate=value;},
     setFront(){root.rotation.y-=controls.getAzimuthalAngle();root.updateMatrixWorld(true);},
     async snapshot(){renderer.render(scene,camera);return new Promise(resolve=>renderer.domElement.toBlob(resolve,'image/png'));},
     async blend(height){
-      const [template,index]=await Promise.all([fetch('./assets/avatar/avatar-template.blend').then(r=>{if(!r.ok)throw Error('블렌더 템플릿을 불러오지 못했습니다.');return r.arrayBuffer();}),fetch('./assets/avatar/template-index.json').then(r=>r.json())]);
+      const [template,index]=await Promise.all([fetch('./assets/avatar/avatar-template.blend').then(r=>{if(!r.ok)throw Error('The Blender template could not be loaded.');return r.arrayBuffer();}),fetch('./assets/avatar/template-index.json').then(r=>r.json())]);
       const {geometry,textures}=await atlasMesh(root);
       return new Blob([writeBlend(template,index,geometry,textures,height)],{type:'application/octet-stream'});
     },
@@ -67,13 +67,13 @@ export async function createAvatarViewer(container,buffer,{onCamera=()=>{}}={}) 
 async function atlasMesh(root) {
   const meshes=[];root.updateMatrixWorld(true);root.traverse(o=>{if(o.isMesh && o.visible)meshes.push(o);});
   const materials=[...new Set(meshes.flatMap(o=>[].concat(o.material)))];
-  if(!materials.length||materials.length>16)throw Error('블렌더 내보내기는 최대 16개 재질을 지원합니다. 원본 GLB를 저장해 주세요.');
-  if(meshes.some(o=>o.isSkinnedMesh))throw Error('리깅 모델은 원본 GLB로 저장해 주세요. 이 내보내기는 정지 모델용입니다.');
+  if(!materials.length||materials.length>16)throw Error('Blender export supports up to 16 materials. Please download the original GLB.');
+  if(meshes.some(o=>o.isSkinnedMesh))throw Error('Download the original GLB for rigged models. This exporter supports static meshes only.');
   const grid=Math.ceil(Math.sqrt(materials.length)), tile=grid<=2?2048:1024, side=grid*tile,pad=8;
   const atlases={};for(const n of ['BaseColor','ORM','Normal']){const c=document.createElement('canvas');c.width=c.height=side;atlases[n]=c;}
   const texturePixels=(texture,channel,constant,scale=1)=>{
     const c=document.createElement('canvas');c.width=c.height=tile-2*pad;const ctx=c.getContext('2d',{willReadFrequently:true});
-    if(texture?.image){texture.updateMatrix();if(!texture.matrix.equals(new THREE.Matrix3()))throw Error('변형된 UV 재질은 원본 GLB로 저장해 주세요.');ctx.drawImage(texture.image,0,0,c.width,c.height);}
+    if(texture?.image){texture.updateMatrix();if(!texture.matrix.equals(new THREE.Matrix3()))throw Error('Download the original GLB to preserve transformed texture coordinates.');ctx.drawImage(texture.image,0,0,c.width,c.height);}
     else {ctx.fillStyle=`rgb(${Math.round(constant*255)},${Math.round(constant*255)},${Math.round(constant*255)})`;ctx.fillRect(0,0,c.width,c.height);}
     return {canvas:c,context:ctx,pixels:ctx.getImageData(0,0,c.width,c.height),channel,scale};
   };
@@ -104,7 +104,7 @@ async function atlasMesh(root) {
     for(const group of groups){const material=[].concat(object.material)[group.materialIndex||0]||object.material,mi=materials.indexOf(material),tx=(mi%grid)*tile,ty=Math.floor(mi/grid)*tile;
       for(let c=group.start;c<group.start+group.count;c++) {
         const k=geo.index?geo.index.getX(c):c,u=uv?uv.getX(k):.5,w=uv?uv.getY(k):.5;
-        if(u<-.001||u>1.001||w<-.001||w>1.001)throw Error('반복 UV가 있는 모델은 원본 GLB로 저장해 주세요.');
+        if(u<-.001||u>1.001||w<-.001||w>1.001)throw Error('Download the original GLB to preserve repeating texture coordinates.');
         v.fromBufferAttribute(pos,k).applyMatrix4(object.matrixWorld);n.fromBufferAttribute(norm,k).applyNormalMatrix(nm);
         geometry.positions.push(v.x,-v.z,v.y);geometry.normals.push(n.x,-n.z,n.y);
         geometry.uvs.push((tx+pad+Math.max(0,Math.min(1,u))*(tile-2*pad))/side,1-(ty+pad+Math.max(0,Math.min(1,w))*(tile-2*pad))/side);
@@ -116,6 +116,6 @@ async function atlasMesh(root) {
   // Weld vertices sharing position, normal and atlas UV; preserve UV seams.
   const welded={positions:[],normals:[],uvs:[],triangles:[]},vertices=new Map();
   for(let i=0;i<geometry.triangles.length;i++){const row=[...geometry.positions.slice(i*3,i*3+3),...geometry.normals.slice(i*3,i*3+3),...geometry.uvs.slice(i*2,i*2+2)],key=row.map(x=>x.toFixed(7)).join(',');if(!vertices.has(key)){vertices.set(key,vertices.size);welded.positions.push(...row.slice(0,3));welded.normals.push(...row.slice(3,6));welded.uvs.push(...row.slice(6));}welded.triangles.push(vertices.get(key));}
-  const textures={};for(const [name,c] of Object.entries(atlases)){const blob=await new Promise(resolve=>c.toBlob(resolve,'image/png'));if(!blob)throw Error('재질 저장 공간이 부족합니다. PC에서 다시 저장해 주세요.');textures[name]=new Uint8Array(await blob.arrayBuffer());c.width=c.height=1;}
+  const textures={};for(const [name,c] of Object.entries(atlases)){const blob=await new Promise(resolve=>c.toBlob(resolve,'image/png'));if(!blob)throw Error('Not enough memory to export the textures. Please try on a desktop computer.');textures[name]=new Uint8Array(await blob.arrayBuffer());c.width=c.height=1;}
   return {geometry:welded,textures};
 }

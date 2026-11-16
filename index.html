@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500;1,9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261117-en1" />
 </head>
 <body>
 
@@ -380,39 +380,39 @@
             <p class="fs__help">These become the raw material for your character. <b>Upload photos of yourself only.</b> Clear photos taken in good light work best. (JPG · PNG · WEBP, up to 10MB each)</p>
             <div class="uploads">
               <div class="upload" data-key="face" data-required="1">
-                <input type="file" id="photoFace" name="photoFace" accept="image/*" required />
-                <label for="photoFace" class="upload__box">
+                <input type="file" hidden id="photoFace" name="photoFace" accept="image/*" required />
+                <button type="button" class="upload__box">
                   <span class="upload__icon">🙂</span>
                   <span class="upload__title">Face photo <i>*</i></span>
                   <span class="upload__desc">Whole face visible, no hat or sunglasses</span>
-                </label>
+                </button>
                 <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
               <div class="upload" data-key="body" data-required="1">
-                <input type="file" id="photoBody" name="photoBody" accept="image/*" required />
-                <label for="photoBody" class="upload__box">
+                <input type="file" hidden id="photoBody" name="photoBody" accept="image/*" required />
+                <button type="button" class="upload__box">
                   <span class="upload__icon">🧍</span>
                   <span class="upload__title">Full-body photo <i>*</i></span>
                   <span class="upload__desc">Head to toe, in what you usually wear</span>
-                </label>
+                </button>
                 <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
               <div class="upload" data-key="extra1">
-                <input type="file" id="photoExtra1" name="photoExtra1" accept="image/*" />
-                <label for="photoExtra1" class="upload__box">
+                <input type="file" hidden id="photoExtra1" name="photoExtra1" accept="image/*" />
+                <button type="button" class="upload__box">
                   <span class="upload__icon">➕</span>
                   <span class="upload__title">Extra photo <small>(optional)</small></span>
                   <span class="upload__desc">Side profile, a style you love, everyday life</span>
-                </label>
+                </button>
                 <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
               <div class="upload" data-key="extra2">
-                <input type="file" id="photoExtra2" name="photoExtra2" accept="image/*" />
-                <label for="photoExtra2" class="upload__box">
+                <input type="file" hidden id="photoExtra2" name="photoExtra2" accept="image/*" />
+                <button type="button" class="upload__box">
                   <span class="upload__icon">➕</span>
                   <span class="upload__title">Extra photo <small>(optional)</small></span>
                   <span class="upload__desc">Up to two extras</span>
-                </label>
+                </button>
                 <div class="upload__preview" hidden><img alt="" /><button type="button" class="upload__remove" aria-label="Remove">✕</button></div>
               </div>
             </div>
@@ -517,7 +517,7 @@
         <div class="footer__social">
           <a id="footYoutube" href="#" target="_blank" rel="noopener">YouTube</a>
           <a id="footInsta" href="#" target="_blank" rel="noopener" hidden>Instagram</a>
-          <a id="footMail" href="contact.html">Contact · 문의</a>
+          <a id="footMail" href="contact.html">Contact</a>
         </div>
       </div>
       <div class="footer__info">
@@ -530,7 +530,7 @@
   </footer>
 
   <script src="config.js?v=20261026"></script>
-  <script src="form-delivery.js?v=20261026"></script>
-  <script src="app.js?v=20261026"></script>
+  <script src="form-delivery.js?v=20261117-en1"></script>
+  <script src="app.js?v=20261117-en1"></script>
 </body>
 </html>

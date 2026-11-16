@@ -20,11 +20,11 @@ export async function readTicket(ticket, secret) {
     if (!Number.isFinite(job.expires) || job.expires < Date.now()) throw Error();
     queueURL(job.status, job.id, true); queueURL(job.result, job.id, false);
     return job;
-  } catch (_) { throw bad(403,'모델 조회 링크가 만료되었거나 유효하지 않습니다. 저장한 파일을 사용해 주세요.','MODEL_TICKET_EXPIRED'); }
+  } catch (_) { throw bad(403,'The model access link has expired or is invalid. Please use your saved files.','MODEL_TICKET_EXPIRED'); }
 }
 function queueURL(value, id, status) {
   const url = new URL(value);
-  if (!/^[a-zA-Z0-9_-]{8,100}$/.test(id) || url.origin !== 'https://queue.fal.run' || url.pathname !== `/meshy/v7.1/requests/${id}${status?'/status':''}` || url.search || url.hash || url.username || url.password) throw bad(502,'3D 생성 요청 주소를 확인하지 못했습니다.','MODEL_QUEUE_INVALID');
+  if (!/^[a-zA-Z0-9_-]{8,100}$/.test(id) || url.origin !== 'https://queue.fal.run' || url.pathname !== `/meshy/v7.1/requests/${id}${status?'/status':''}` || url.search || url.hash || url.username || url.password) throw bad(502,'The 3D generation request URL could not be verified.','MODEL_QUEUE_INVALID');
   return url.href;
 }
 export function assetURL(value) {
@@ -44,7 +44,7 @@ export async function submitModel(images, env, network) {
   if (!response.ok) {
     const detail=await response.text(),balance=response.status===402||/exhausted balance|insufficient.*(?:balance|credit)|top up/i.test(detail);
     const code = balance ? 'PROVIDER_BALANCE' : [401,403].includes(response.status) ? 'PROVIDER_PERMISSION' : 'MODEL_REJECTED';
-    const message = balance ? 'fal.ai 잔액이 부족합니다. 충전 후 다시 이용해 주세요.' : [401,403].includes(response.status) ? '3D 모델 접근 권한을 확인해 주세요. fal.ai 키에서 Meshy 모델 사용이 허용되어야 합니다.' : '3D 생성 요청이 거절되었습니다. 잠시 후 사진과 이용 한도를 확인해 주세요.';
+    const message = balance ? '3D generation credits are depleted. Please contact the operator.' : [401,403].includes(response.status) ? '3D model access is not authorized. The operator needs to enable Meshy access for the fal.ai key.' : 'The 3D request was rejected. Please check your reference images and usage limits before trying again.';
     throw Object.assign(bad(response.status === 422 ? 422 : 503,message,code), {releaseQuota:[400,401,402,403,422,429].includes(response.status)});
   }
   const result = await response.json();
@@ -53,31 +53,31 @@ export async function submitModel(images, env, network) {
 }
 async function resultFor(job, env, network) {
   const response = await network(job.result,{headers:headers(env),signal:AbortSignal.timeout(20000)});
-  if (!response.ok) throw bad(502,'3D 모델 결과를 가져오지 못했습니다. 결과 확인 버튼으로 다시 조회해 주세요.','MODEL_RESULT_UNAVAILABLE');
+  if (!response.ok) throw bad(502,'The 3D result could not be retrieved. Select Check existing job to try again.','MODEL_RESULT_UNAVAILABLE');
   const result = await response.json();
   const glb = assetURL(result.model_glb || result.model_urls?.glb);
-  if (!glb) throw bad(502,'생성된 3D 모델 파일을 확인하지 못했습니다.','MODEL_FILE_MISSING');
+  if (!glb) throw bad(502,'The generated 3D model file could not be found.','MODEL_FILE_MISSING');
   return {glb,blend:assetURL(result.model_urls?.blend),fbx:assetURL(result.model_urls?.fbx)};
 }
 export async function modelStatus(ticket, env, network) {
   const job = await readTicket(ticket,env.FAL_KEY);
   const response = await network(job.status,{headers:headers(env),signal:AbortSignal.timeout(15000)});
-  if (!response.ok) throw bad(502,'처리 상태를 확인하지 못했습니다. 재생성 없이 다시 조회할 수 있습니다.','MODEL_STATUS_UNAVAILABLE');
+  if (!response.ok) throw bad(502,'The job status could not be checked. You can check again without starting another generation.','MODEL_STATUS_UNAVAILABLE');
   const result = await response.json();
   if (result.status === 'COMPLETED') {
-    if (result.error || result.error_type) return {ok:true,status:'FAILED',error:'3D 생성에 실패했습니다. 기준 이미지의 전신·손·발·의상 일관성을 확인해 주세요.'};
+    if (result.error || result.error_type) return {ok:true,status:'FAILED',error:'3D generation failed. Check full-body coverage and the consistency of hands, feet and clothing in your references.'};
     const files = await resultFor(job,env,network);
     return {ok:true,status:'COMPLETED',formats:Object.keys(files).filter(k=>files[k]),expires:job.expires};
   }
-  if (!['IN_QUEUE','IN_PROGRESS'].includes(result.status)) throw bad(502,'알 수 없는 처리 상태입니다. 잠시 후 다시 조회해 주세요.','MODEL_STATUS_INVALID');
+  if (!['IN_QUEUE','IN_PROGRESS'].includes(result.status)) throw bad(502,'An unknown job status was received. Please check again shortly.','MODEL_STATUS_INVALID');
   return {ok:true,status:result.status,expires:job.expires};
 }
 export async function modelFile(ticket, format, env, network, cors) {
-  if (!['glb','blend','fbx'].includes(format)) throw bad(400,'지원하지 않는 모델 형식입니다.');
+  if (!['glb','blend','fbx'].includes(format)) throw bad(400,'This model format is not supported.');
   const job = await readTicket(ticket,env.FAL_KEY), files = await resultFor(job,env,network);
-  if (!files[format]) throw bad(404,'해당 파일은 제공되지 않았습니다. 브라우저의 블렌더 내보내기를 이용해 주세요.');
+  if (!files[format]) throw bad(404,'This file was not provided. Use the Blender export in your browser instead.');
   const response = await network(files[format],{redirect:'manual',signal:AbortSignal.timeout(120000)});
-  if (!response.ok || !response.body) throw bad(502,'모델 파일 다운로드에 실패했습니다. 다시 다운로드해 주세요.');
+  if (!response.ok || !response.body) throw bad(502,'The model file could not be downloaded. Please try again.');
   // Stream with a hard upper bound; don't buffer large meshes in a 128 MB Worker.
   let size = 0;
   const body = response.body.pipeThrough(new TransformStream({transform(chunk,controller){size+=chunk.length;if(size>100*1024*1024)throw Error('Model exceeds 100 MB');controller.enqueue(chunk);}}));

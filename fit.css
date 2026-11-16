@@ -168,7 +168,7 @@
   outline:2px solid var(--gold);
   outline-offset:3px
 }
-.photo-upload label {
+.photo-upload .photo-upload-control {
   display:flex;
   position:absolute;
   inset:0;
@@ -180,11 +180,11 @@
   text-align:center;
   cursor:pointer
 }
-.photo-upload label strong {
+.photo-upload .photo-upload-control strong {
   font-size:.85rem;
   font-weight:500
 }
-.photo-upload label>span:last-child {
+.photo-upload .photo-upload-control>span:last-child {
   font-size:.7rem;
   color:var(--fog)
 }
@@ -962,6 +962,9 @@ body.dialog-open {
 .face-reference label span { color:var(--gold); font-size:.7rem; margin-left:8px; }
 .face-reference p { color:var(--fog); font-size:.76rem; line-height:1.8; }
 .face-reference input { max-width:100%; color:var(--cream-2); font-size:.75rem; }
+.face-reference .face-file-input { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.face-reference .face-upload-control { display:inline-block; margin:10px 0; padding:11px 16px; border:1px solid #ffffff40; border-radius:8px; color:var(--cream); cursor:pointer; }
+.face-file-input:focus-visible + .face-upload-control { outline:2px solid var(--gold); outline-offset:4px; }
 #facePreviewWrap { display:flex; align-items:center; gap:14px; margin-top:16px; }
 #facePreview { width:70px; height:85px; object-fit:contain; border-radius:6px; }
 .sheet-workspace { margin-top:48px; padding:28px; border:1px solid #c99d5045; border-radius:18px; background:#19191f; }
@@ -1016,3 +1019,7 @@ body.dialog-open {
 .avatar-model-workspace [hidden]{display:none!important}
 @media(max-width:700px){.avatar-viewer{height:480px}.avatar-camera-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.avatar-export-row{display:block}.avatar-viewer-header{font-size:12px}.avatar-model-workspace{margin-top:40px;padding-top:32px}}
 @media(prefers-reduced-motion:reduce){.avatar-viewer{scroll-behavior:auto}}
+
+.photo-upload-control { border:0; background:transparent; color:inherit; font:inherit; width:100%; }
+.face-reference .face-upload-control { background:transparent; font:inherit; font-size:.85rem; }
+.photo-upload-control:focus-visible, .face-upload-control:focus-visible { outline:2px solid var(--gold); outline-offset:-4px; }

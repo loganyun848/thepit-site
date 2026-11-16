@@ -2,22 +2,22 @@
 (function (root) {
   "use strict";
   const LIMITS = { height: [120, 220], weight: [30, 220], chest: [50, 200], waist: [40, 200], hips: [50, 200] };
-  const LABELS = { height: "키", weight: "몸무게", chest: "가슴둘레", waist: "허리둘레", hips: "엉덩이둘레" };
+  const LABELS = { height: "Height", weight: "Weight", chest: "Chest", waist: "Waist", hips: "Hips" };
   const ALPHA = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL"];
   function profile(input) {
-    if (!["women", "men"].includes(input.gender)) throw Error("여성복 또는 남성복을 선택해 주세요.");
+    if (!["women", "men"].includes(input.gender)) throw Error("Please choose Women or Men.");
     const p = { gender: input.gender, missing: [], estimated: [] };
     for (const [key, [lo, hi]] of Object.entries(LIMITS)) {
       const raw = String(input[key] ?? "").trim();
       if (!raw && !["height", "weight"].includes(key)) { p[key] = null; p.missing.push(key); continue; }
       const value = Number(raw);
-      if (!raw || !Number.isFinite(value) || value < lo || value > hi) throw Error(`${LABELS[key]}는 ${lo}~${hi} 사이 숫자로 입력해 주세요.`);
+      if (!raw || !Number.isFinite(value) || value < lo || value > hi) throw Error(`Enter ${LABELS[key].toLowerCase()} as a number between ${lo} and ${hi}.`);
       p[key] = value;
     }
     p.usualTopSize = String(input.usualTopSize || "");
     p.usualBottomSize = String(input.usualBottomSize || "");
-    if (p.usualTopSize && !ALPHA.includes(p.usualTopSize)) throw Error("평소 상의 사이즈를 목록에서 선택해 주세요.");
-    if (p.usualBottomSize && !ALPHA.includes(p.usualBottomSize) && !/^inch:(2[2-9]|3[0-9]|4[0-4])$/.test(p.usualBottomSize)) throw Error("평소 하의 사이즈를 목록에서 선택해 주세요.");
+    if (p.usualTopSize && !ALPHA.includes(p.usualTopSize)) throw Error("Please select your usual top size from the list.");
+    if (p.usualBottomSize && !ALPHA.includes(p.usualBottomSize) && !/^inch:(2[2-9]|3[0-9]|4[0-4])$/.test(p.usualBottomSize)) throw Error("Please select your usual bottom size from the list.");
     p.usualBrand = ["UNIQLO", "ZARA"].includes(input.usualBrand) ? input.usualBrand : "other";
     p.fitPreference = ["slim", "relaxed"].includes(input.fitPreference) ? input.fitPreference : "regular";
     return p;
@@ -25,7 +25,7 @@
   function ease(item, key, preference) {
     if (key === "waist") return [0, 4];
     if (key === "hips") return preference === "relaxed" ? [4, 14] : [2, 10];
-    let pair = item.cat === "outer" ? [10, 22] : /릴렉스|릴랙스|박시|오버사이즈|relaxed|oversize/i.test(item.name) ? [12, 24] : /슬림|타이트|립폴로|립터틀/i.test(item.name) ? [0, 8] : [4, 14];
+    let pair = item.cat === "outer" ? [10, 22] : /relaxed|boxy|oversize/i.test(item.name) ? [12, 24] : /slim|tight|ribbed.*(?:polo|turtleneck)/i.test(item.name) ? [0, 8] : [4, 14];
     if (preference === "relaxed") pair = [pair[0] + 4, pair[1] + 6];
     if (preference === "slim") pair = [Math.max(0, pair[0] - 4), Math.max(4, pair[1] - 4)];
     return pair;

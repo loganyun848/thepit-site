@@ -36,7 +36,7 @@ async function readySheet(s) {
 }
 
 test('Missing setup disables both generations without transmitting the uploaded photo',async()=>{
-  const s=setup({configured:false});try{s.open();await new Promise(setImmediate);assert.equal(s.calls.length,0);assert.equal(s.$('tryon').hidden,false);assert.equal(s.$('character').hidden,false);assert.equal(s.$('tryonSize').value,'XL');assert.equal(s.$('generateTryon').disabled,true);assert.equal(s.$('generateCharacter').disabled,true);assert.equal(s.$('characterResult').hidden,true);assert.match(s.$('characterStatus').textContent,/연결 준비/);}finally{s.dom.window.close()}
+  const s=setup({configured:false});try{s.open();await new Promise(setImmediate);assert.equal(s.calls.length,0);assert.equal(s.$('tryon').hidden,false);assert.equal(s.$('character').hidden,false);assert.equal(s.$('tryonSize').value,'XL');assert.equal(s.$('generateTryon').disabled,true);assert.equal(s.$('generateCharacter').disabled,true);assert.equal(s.$('characterResult').hidden,true);assert.match(s.$('characterStatus').textContent,/being connected/);}finally{s.dom.window.close()}
 });
 
 test('Consent gates generation; successful try-on feeds the character stage with the correct identity',async()=>{
@@ -46,7 +46,7 @@ test('Consent gates generation; successful try-on feeds the character stage with
     assert.equal(s.$('tryonResult').getAttribute('src'),image);assert.equal(s.$('downloadTryon').hidden,false);
     const first=JSON.parse(s.calls[1].init.body);assert.equal(first.photo,prepared(selection.photo));assert.equal(first.itemId,'test-garment');assert.equal(first.consent,true);assert.equal(first.chest,undefined);assert.equal(first.size,undefined);
     await s.consent('character');s.w.document.querySelector('[value="city"]').checked=true;s.$('generateCharacter').click();await until(()=>!s.$('downloadCharacter').hidden);
-    const second=JSON.parse(s.calls[2].init.body);assert.equal(s.calls[2].url,'https://worker.example/character');assert.equal(second.photo,prepared(image));assert.equal(second.original,prepared(selection.photo));assert.equal(second.scene,'city');assert.equal(s.$('characterResult').hidden,false);assert.match(s.$('characterResultLabel').textContent,/야외 인물 사진/);
+    const second=JSON.parse(s.calls[2].init.body);assert.equal(s.calls[2].url,'https://worker.example/character');assert.equal(second.photo,prepared(image));assert.equal(second.original,prepared(selection.photo));assert.equal(second.scene,'city');assert.equal(s.$('characterResult').hidden,false);assert.match(s.$('characterResultLabel').textContent,/Outdoor portrait/);
     s.w.FIT_TRYON.open({...selection,item:{...selection.item,id:'another-garment'}});assert.equal(s.$('characterResult').hasAttribute('src'),false);assert.equal(s.$('downloadCharacter').hasAttribute('href'),false);assert.equal(s.$('nextCharacter').hidden,true);assert.equal(s.$('characterConsent').checked,false);
   }finally{s.dom.window.close()}
 });
@@ -60,8 +60,8 @@ test('Late results from a replaced photo cannot reappear in the studio',async()=
 });
 
 test('Provider errors never unlock character generation or fabricate a result; retry is available',async()=>{
-  const s=setup({infer:async()=>Response.json({ok:false,error:'테스트 생성 실패'},{status:502})});try{
-    s.open();await until(()=>!s.$('tryonConsent').disabled);await s.consent('tryon');s.$('generateTryon').click();await until(()=>s.$('tryonStatus').textContent==='테스트 생성 실패');
+  const s=setup({infer:async()=>Response.json({ok:false,error:'Test generation failure'},{status:502})});try{
+    s.open();await until(()=>!s.$('tryonConsent').disabled);await s.consent('tryon');s.$('generateTryon').click();await until(()=>s.$('tryonStatus').textContent==='Test generation failure');
     assert.equal(s.$('tryonResult').hidden,true);assert.equal(s.$('downloadTryon').hidden,true);assert.equal(s.$('generateCharacter').disabled,true);assert.equal(s.$('generateTryon').disabled,false);assert.equal(s.$('cancelTryon').hidden,true);
   }finally{s.dom.window.close()}
 });
@@ -69,7 +69,7 @@ test('Provider errors never unlock character generation or fabricate a result; r
 test('A character response from the old server cannot unlock a photographic sheet',async()=>{
   const s=setup({infer:async()=>Response.json({ok:true,image})});try{
     s.open();await until(()=>!s.$('tryonConsent').disabled);await s.consent('tryon');s.$('generateTryon').click();await until(()=>!s.$('nextCharacter').hidden);
-    await s.consent('character');s.$('generateCharacter').click();await until(()=>s.$('characterStatus').textContent.includes('업데이트'));
+    await s.consent('character');s.$('generateCharacter').click();await until(()=>s.$('characterStatus').textContent.includes('service version'));
     assert.equal(s.$('characterResult').hidden,true);assert.equal(s.$('sheetWorkspace').hidden,true);
     assert.equal(s.$('generateSheet').disabled,true);assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,0);
   }finally{s.dom.window.close()}
@@ -85,7 +85,7 @@ test('Approval gates a sheet; exactly three requests share one anchor and produc
     assert.equal(new Set(calls.map(c=>JSON.parse(c.init.body).requestId)).size,3);
     assert.equal(s.$('downloadSheet').disabled,false);assert.equal(s.$('generateSheet').disabled,true);
     assert.equal(s.$('sheetGrid').querySelectorAll('img').length,4);
-    s.$('sheetGrid').children[2].click();assert.equal(s.$('sheetDialog').open,true);assert.match(s.$('sheetDialogTitle').textContent,/뒷모습/);
+    s.$('sheetGrid').children[2].click();assert.equal(s.$('sheetDialog').open,true);assert.match(s.$('sheetDialogTitle').textContent,/Back/);
     const before=s.calls.length;s.$('downloadSheet').click();await until(()=>s.labels.length===4);await until(()=>!s.$('downloadSheet').disabled);
     assert.equal(s.calls.length,before,'compositing and download must not generate more images');assert.equal(s.labels[3].x,1152);assert.equal(s.labels[3].y,2152);
   }finally{s.dom.window.close()}
@@ -94,10 +94,10 @@ test('Approval gates a sheet; exactly three requests share one anchor and produc
 test('Failed sheet stops immediately; explicit resume keeps completed images and retries only missing views',async()=>{
   let fail=true;const s=setup({infer:async(url,init)=>{
     const view=JSON.parse(init.body).view;
-    if(url.endsWith('/character-view')&&view===3&&fail)return Response.json({ok:false,error:'테스트 중단'},{status:502});
+    if(url.endsWith('/character-view')&&view===3&&fail)return Response.json({ok:false,error:'Test interruption'},{status:502});
     return Response.json({ok:true,appearance:'production-avatar-v2',image,view});
   }});try{
-    await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetStatus').textContent.includes('테스트 중단'));
+    await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetStatus').textContent.includes('Test interruption'));
     assert.equal(s.$('sheetCount').textContent,'3 / 4');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,3);
     assert.equal(s.$('downloadSheet').disabled,true);fail=false;s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='4 / 4');
     const views=s.calls.filter(c=>c.url.endsWith('/character-view')).map(c=>JSON.parse(c.init.body).view);

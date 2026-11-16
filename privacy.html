@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261117-en1" />
   <style>
     .legal { max-width: 760px; margin: 0 auto; padding: 60px 20px 90px; color: var(--cream-2); }
     .legal h1 { color: var(--cream); font-size: 1.8rem; margin-bottom: 8px; }
@@ -23,7 +23,7 @@
   <main class="legal">
     <a class="back" href="index.html">← Back to THE PIT</a>
     <h1>Privacy Policy</h1>
-    <p>LECPLE Inc. (“we”, “us”) processes information submitted through THE PIT applications and contact forms as described below. Updated: 26 October 2026.</p>
+    <p>LECPLE Inc. (“we”, “us”) processes information submitted through THE PIT applications and contact forms as described below. Updated: 17 November 2026.</p>
 
     <h2>1. What we collect and why</h2>
     <table>
@@ -50,12 +50,13 @@
     <h2>4. Sharing and processors</h2>
     <p>Website inquiries and applications are sent through FormSubmit (Devro LABS) to ceo@lecple.com. FormSubmit processes the fields and attachments to deliver the email. Its documentation states that text submissions are retained in its archive for 30 days and uploaded files are not retained in that archive. See the <a href="https://formsubmit.co/privacy.pdf" target="_blank" rel="noopener">FormSubmit privacy policy</a> and <a href="https://formsubmit.co/documentation" target="_blank" rel="noopener">delivery documentation</a>. Processing may take place outside your country.</p>
     <p>If we switch applications to our Google Apps Script backend, application information and photos will instead be stored in Google Sheets and Google Drive, operated by Google LLC. The website's submission notice will identify that route.</p>
-    <h2 id="fit-room">Fit Room · AI 착용 이미지와 캐릭터</h2>
-    <p lang="ko">사진 업로드와 사이즈 비교 단계에서는 사진·신체 치수·평소 사이즈를 브라우저 메모리에서만 처리합니다. 사진으로 신체 치수나 성별을 판독하지 않습니다. 새로고침하거나 페이지를 닫으면 입력과 생성 결과가 사라집니다.</p>
-    <p lang="ko">AI 서비스가 연결된 경우, 각 단계의 사진 전송 동의를 선택하고 생성 버튼을 눌렀을 때만 사진을 전송합니다. 착용 생성에는 내 사진과 선택한 상품 사진을, 기준 캐릭터 생성에는 원본 사진·착용 결과·선택적으로 추가한 얼굴 사진을 사용합니다. 전신 기준 이미지 생성에 별도 동의하고 시작하면 동일한 사진과 확인한 정면 이미지를 순차 전송해 좌측면·후면·우측면 3장을 추가 생성합니다. 3D 모델 생성에 별도로 동의한 경우 확인한 기준 이미지 4장을 fal.ai의 Meshy 모델로 전송합니다. 중단하면 새로운 요청은 보내지 않지만 이미 보낸 요청은 처리될 수 있습니다. 기준 이미지 합성, 360° 회전, 촬영 각도 변경과 .blend 내보내기는 브라우저에서 처리합니다. 3D 생성 결과 파일은 서버 중계를 통해 내려받습니다. 모델은 메시·UV·재질을 포함하며 신체 스캔이나 모션 데이터가 아닙니다. 이미지 처리 경로는 Cloudflare Workers → fal.ai이며, 착용은 FASHN, 캐릭터는 FLUX.2 모델을 사용합니다. 키·몸무게·신체 둘레·평소 사이즈는 이 생성 API로 전송하지 않습니다. 생성 이미지는 회원 프로필이나 공개 갤러리에 저장·게시하지 않습니다.</p>
-    <p lang="ko">전송 전에 사진을 최대 1,600픽셀의 JPG로 변환해 파일 메타데이터를 제거합니다. 우리 서버에는 사진이나 결과를 영구 저장하지 않습니다. fal.ai 요청 기록의 입력·출력 저장을 끄고, 서비스가 지원하는 생성 파일의 만료 시간을 이미지 1시간, 3D 결과 2시간으로 지정합니다. 3D 조회 권한은 2시간 유효한 서명된 작업 티켓으로 제한하며, 티켓에 사진이나 API 키는 넣지 않습니다. 다운로드한 파일은 사용자 장치에 남습니다. 이는 외부 사업자의 모든 로그가 즉시 삭제된다는 뜻은 아닙니다. 별도 보관·처리 기준은 <a href="https://fal.ai/privacy" target="_blank" rel="noopener">fal.ai 개인정보처리방침</a> 및 <a href="https://fal.ai/docs/documentation/model-apis/media-expiration" target="_blank" rel="noopener">미디어 보관 안내</a>를 따르며, 국외에서 처리될 수 있습니다.</p>
-    <p lang="ko">자동 요청과 과도한 사용을 방지하기 위해 Cloudflare Turnstile을 사용합니다. Cloudflare는 보안 확인에 필요한 IP 주소·브라우저 정보 등을 처리할 수 있습니다. 서버는 IP 주소에서 만든 일일 해시값, 요청 식별자와 사용 횟수를 보관하며 마지막 허용 요청으로부터 약 24시간 후 삭제합니다. 원본 IP 주소를 해당 사용량 저장소에 보관하지 않습니다. 자세한 내용은 <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare 개인정보처리방침</a>을 참고하세요.</p>
-    <p lang="ko">다른 사진이나 상품을 선택하면 이전 결과는 초기화됩니다. 저장할 이미지는 페이지를 떠나기 전에 직접 내려받으세요. 동의하지 않으면 이미지 생성은 사용할 수 없지만 상품 탐색과 사이즈 비교는 이용할 수 있습니다. Fit Room 사진은 문의·신청 이메일로 전송되지 않습니다.</p>
+    <h2 id="fit-room">Fit Room · AI try-on and avatars</h2>
+    <p>During photo upload and size comparison, photos, body measurements and usual sizes are processed only in browser memory. We do not infer body measurements or gender from your photo. Refreshing or closing the page clears your entries and generated results.</p>
+    <p>When the AI service is available, photos are sent only after you consent at the relevant stage and select Generate. Try-on generation uses your photo and the selected product image. Front-view avatar generation uses your original photo, try-on result and optional face reference. With separate consent, the same references and approved front image are sent sequentially to create three additional full-body views: left, back and right. With separate consent for 3D generation, the four approved images are sent to Meshy on fal.ai. Stopping generation prevents new requests; requests already submitted may continue processing.</p>
+    <p>Reference sheet assembly, 360° rotation, camera changes and .blend export run in your browser. Generated 3D files are downloaded through our server proxy. Models contain mesh geometry, UVs and textures; they are not body scans or motion data. Images are processed through Cloudflare Workers and fal.ai, using FASHN for try-on and FLUX.2 for avatar references. Height, weight, body circumferences and usual clothing sizes are not sent to these generation APIs. Generated images are not saved to a member profile or published in a public gallery.</p>
+    <p>Before transmission, photos are converted to JPG with a maximum dimension of 1,600 pixels, removing file metadata. We do not permanently store photos or results on our server. We disable input/output storage in fal.ai request logs and request a media expiry of one hour for images and two hours for 3D results where supported. Access to 3D jobs is restricted by a signed ticket valid for two hours, containing no photos or API keys. Downloaded files remain on your device. These measures do not mean that all third-party logs are immediately deleted. Additional processing and retention follow the <a href="https://fal.ai/privacy" target="_blank" rel="noopener">fal.ai Privacy Policy</a> and <a href="https://fal.ai/docs/documentation/model-apis/media-expiration" target="_blank" rel="noopener">media retention documentation</a>. Processing may take place outside your country.</p>
+    <p>We use Cloudflare Turnstile to prevent automated requests and excessive usage. Cloudflare may process your IP address and browser information for security checks. Our server stores a daily hash derived from your IP address, request identifiers and usage counts, and deletes them approximately 24 hours after the last permitted request. The original IP address is not stored in that usage database. See the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare Privacy Policy</a>.</p>
+    <p>Choosing a different photo or product clears previous results. Download anything you want to keep before leaving the page. You can browse products and compare sizes without consenting to image generation. Fit Room photos are not sent in inquiry or application emails.</p>
 
     <h2>5. Your rights</h2>
     <p>You may at any time ask to access, correct or delete your personal data, or to stop its processing. Send requests to the contact below and we will respond within 10 days. We do not knowingly collect data from children under 14.</p>
@@ -64,7 +65,7 @@
     <p>Only members of the production team with access rights can view application data. Data in transit is encrypted with HTTPS.</p>
 
     <h2>7. Contact</h2>
-    <p>LECPLE Inc., THE PIT production team · Email: ceo@lecple.com · <a href="contact.html">문의하기 / Contact form</a></p>
+    <p>LECPLE Inc., THE PIT production team · Email: ceo@lecple.com · <a href="contact.html">Contact form</a></p>
   </main>
 </body>
 </html>

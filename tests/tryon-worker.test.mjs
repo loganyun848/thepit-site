@@ -145,7 +145,7 @@ test('fal exhausted-balance rejection is actionable and rolls back exactly one r
   const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:(url,init)=>gate.fetch(new Request(url,init))})}};
   const failed=networkStub({providerError:403,providerDetail:'User is locked. Reason: Exhausted balance. Top up your balance. private debug secret'});
   const response=await createHandler(failed.network)(request(),backed),body=await response.json();
-  assert.equal(response.status,503);assert.equal(body.code,'PROVIDER_BALANCE');assert.match(body.error,/잔액이 부족/);assert.match(body.error,/차감하지/);assert.ok(!JSON.stringify(body).includes('private debug'));
+  assert.equal(response.status,503);assert.equal(body.code,'PROVIDER_BALANCE');assert.match(body.error,/credits are depleted/);assert.match(body.error,/does not count/);assert.ok(!JSON.stringify(body).includes('private debug'));
   assert.equal(records.get('quota').count,0);assert.equal(Object.values(records.get('quota').visitors)[0].count,0);
   const visitor=Object.keys(records.get('quota').visitors)[0];
   await gate.fetch(new Request('https://gate/release',{method:'POST',body:JSON.stringify({visitor,requestId:payload.requestId})}));
@@ -160,7 +160,7 @@ test('Quota cooldown, daily exhaustion and storage failures have distinct respon
     const backed={...env,TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>Response.json({code,retryAfter},{status})})}};
     const stub=networkStub();const response=await createHandler(stub.network)(request(),backed);const body=await response.json();
     assert.equal(response.status,status===500?503:status);assert.equal(body.code,status===500?'QUOTA_UNAVAILABLE':code);
-    if(code==='COOLDOWN'){assert.match(body.error,/24초/);assert.equal(response.headers.get('Retry-After'),'24');}
+    if(code==='COOLDOWN'){assert.match(body.error,/24 seconds/);assert.equal(response.headers.get('Retry-After'),'24');}
     assert.ok(!stub.calls.some(call=>call.url.startsWith('https://fal.run/')));
   }
 });

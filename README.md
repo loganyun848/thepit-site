@@ -3,6 +3,12 @@
 사진과 이야기를 올리면, 무작위로 선정된 한 사람이 애니메이션의 주인공이 되는 참여형 홈페이지.
 빌드 도구 없이 HTML/CSS/JS만으로 동작하며 GitHub Pages에 그대로 올라갑니다.
 
+## Public website language
+
+All public pages, product display names, form feedback, generation status, privacy notices and API error messages use English. Turnstile is explicitly configured with `language: 'en'`. Custom upload buttons keep browser-localized file input labels out of the page.
+
+`data/catalog-names.en.json` maps stable product IDs to English display names. The catalog builder requires a translation for every product. Original regional source data, prices and measurements are preserved; prices are labeled KRW and external product links point to the original regional storefronts.
+
 ## 파일 구성
 
 | 파일 | 역할 |
