@@ -11,6 +11,29 @@ const PORT = 8767, HOST = `127.0.0.1:${PORT}`, ORIGIN = `http://${HOST}`;
 // Wrangler adds offline_access itself; passing it through --scopes is rejected by the CLI.
 const LOGIN_SCOPES = ['account:read','user:read','workers:write','workers_scripts:write','challenge-widgets.write'];
 
+// Device authorization avoids expired callbacks from an older browser tab
+// terminating a newer login request on the same localhost port.
+function deviceLoginDetails(output) {
+  const clean = output.replace(/\x1b\[[0-9;]*m/g, '');
+  const code = clean.match(/and enter the code:\s*([A-Za-z0-9-]{4,32})/i)?.[1];
+  if (!code) return null;
+  const candidate = clean.match(/https:\/\/dash\.cloudflare\.com\/oauth2\/device(?:\?[^\s]+)?(?=\s|$)/)?.[0];
+  if (!candidate) return null;
+  const url = new URL(candidate);
+  if (url.hostname !== 'dash.cloudflare.com' || url.pathname !== '/oauth2/device') return null;
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('user_code', code);
+  return { loginUrl: url.href, loginCode: code };
+}
+
+function loginFailureMessage(output, error) {
+  if (error?.code === 'EPERM') return '로그인 프로그램 실행 권한이 제한되었습니다. 연결 도구를 일반 Windows 실행 권한으로 다시 시작해 주세요.';
+  if (/expired|timed out/i.test(output)) return '인증 시간이 만료됐습니다. 로그인 시작을 누른 뒤 새로 열린 창에서 5분 안에 승인해 주세요.';
+  if (/consent denied|access_denied/i.test(output)) return 'Cloudflare 권한 승인이 취소됐습니다. 다시 로그인하여 이 서버에 필요한 권한을 승인해 주세요.';
+  return 'Cloudflare 인증을 완료하지 못했습니다. 로그인 시작을 눌러 새 기기 코드로 다시 인증해 주세요.';
+}
+
 async function ensureWidget(account, authToken, network = fetch) {
   const base = 'https://api.cloudflare.com/client/v4/accounts/'+account+'/challenges/widgets';
   const headers = {Authorization:'Bearer '+authToken,'Content-Type':'application/json'};
@@ -104,18 +127,20 @@ async function connect(data, state) {
   }
 }
 
-function createServer({ token = randomBytes(32).toString('hex'), onConnect = connect, login } = {}) {
-  const state = { phase: 'idle', busy: false, message: 'Cloudflare 로그인과 fal.ai 키 등록 후 나머지 연결을 자동 진행합니다.', loginUrl: '', endpoint: '' };
+function createServer({ token = randomBytes(32).toString('hex'), onConnect = connect, login, runCommand = run } = {}) {
+  const state = { phase: 'idle', busy: false, message: 'Cloudflare 로그인과 fal.ai 키 등록 후 나머지 연결을 자동 진행합니다.', loginUrl: '', loginCode: '', endpoint: '' };
   const loginAction = login || (async () => {
-    state.busy = true; state.phase = 'login'; state.message = 'Cloudflare 인증 페이지를 준비하고 있습니다.';
+    state.busy = true; state.phase = 'login'; state.loginUrl = ''; state.loginCode = ''; state.message = '기본 브라우저에서 Cloudflare 기기 인증을 준비하고 있습니다.';
+    let loginOutput = '';
     try {
-      await run(process.execPath, [cli, 'login', '--browser=false', '--scopes', ...LOGIN_SCOPES], { cwd: backend, onOutput(output) {
-        const match = output.match(/https:\/\/dash\.cloudflare\.com\/[^\s\x1b]+/);
-        if (match) { state.loginUrl = match[0]; state.message = '아래 Cloudflare 인증 열기 링크에서 본인 계정으로 로그인하고 승인해 주세요.'; }
+      await runCommand(process.execPath, [cli, 'login', '--device', '--browser=true', '--scopes', ...LOGIN_SCOPES], { cwd: backend, onOutput(output) {
+        loginOutput = output;
+        const details = deviceLoginDetails(output);
+        if (details) { Object.assign(state, details); state.message = '기본 브라우저에 열린 Cloudflare 창에서 아래 기기 코드를 확인하고 Authorize를 눌러 주세요. 5분 안에 승인이 필요합니다.'; }
       }});
-      state.phase = 'idle'; state.loginUrl = ''; state.message = 'Cloudflare 로그인이 완료됐습니다. 키를 입력하고 연결을 실행해 주세요.';
-    } catch (_) { state.phase = 'error'; state.loginUrl = ''; state.message = 'Cloudflare 로그인이 완료되지 않았습니다. 다시 로그인해 주세요.'; }
-    finally { state.busy = false; }
+      state.phase = 'idle'; state.message = 'Cloudflare 로그인이 완료됐습니다. 키를 입력하고 연결을 실행해 주세요.';
+    } catch (error) { state.phase = 'error'; state.message = loginFailureMessage(loginOutput, error); }
+    finally { state.busy = false; state.loginUrl = ''; state.loginCode = ''; loginOutput = ''; }
   });
   const server = http.createServer(async (req, res) => {
     const headers = {'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':`default-src 'self'; script-src 'nonce-${token}'; style-src 'nonce-${token}'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'`};
@@ -144,4 +169,4 @@ if (require.main === module) {
     server.listen(PORT,'127.0.0.1',()=>console.log('THE PIT AI 연결: '+ORIGIN+' (이 PC에서만 접근 가능)'));
   }).catch(()=>{console.error('먼저 npm ci --prefix backend/tryon 을 실행하세요.');process.exitCode=1});
 }
-module.exports = { createServer, publicConfig, ensureWidget, LOGIN_SCOPES, HOST, ORIGIN };
+module.exports = { createServer, publicConfig, ensureWidget, deviceLoginDetails, loginFailureMessage, LOGIN_SCOPES, HOST, ORIGIN };

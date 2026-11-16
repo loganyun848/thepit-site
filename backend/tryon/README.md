@@ -10,7 +10,7 @@
 
 저장소 루트에서 `node scripts/connect-ai.cjs`를 실행하고 `http://127.0.0.1:8767`을 엽니다. 이 화면은 이 PC에서만 접근할 수 있습니다.
 
-1. **Cloudflare 로그인 시작** → 표시되는 인증 링크에서 계정 소유자가 로그인/승인합니다.
+1. **Cloudflare 로그인 시작** → Windows 기본 브라우저에 열린 Cloudflare 기기 인증 창에서 코드를 확인하고 로그인/승인합니다. 현재 기기 코드는 로컬 설정 화면에도 표시됩니다. 5분 안에 승인하며, 이전 인증 창은 닫습니다. 로컬 콜백 대신 Wrangler의 `--device` 방식을 사용하므로 오래된 탭의 인증 응답과 충돌하지 않습니다.
 2. fal.ai API key 한 개를 로컬 입력란에 등록합니다. 키를 채팅에 보내지 마세요.
 3. **서버 배포하고 홈페이지 연결**을 누르면 Turnstile 위젯 생성/재사용 → Worker 배포 → Cloudflare Secrets 등록 → 설정 확인 → 공개 값 두 개만 config.js에 반영 → GitHub Pages 푸시를 수행합니다.
 
