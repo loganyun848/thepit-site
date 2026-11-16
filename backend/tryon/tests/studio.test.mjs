@@ -15,14 +15,24 @@ function setup({configured=true,infer}={}) {
   w.THEPIT_CONFIG=configured?{TRYON_ENDPOINT:'https://worker.example',TRYON_TURNSTILE_SITE_KEY:'public-test-key'}:{};
   w.AbortSignal=AbortSignal;w.HTMLElement.prototype.scrollIntoView=function(){};
   w.Image=class {naturalWidth=800;naturalHeight=1200;async decode(){}};
-  w.HTMLCanvasElement.prototype.getContext=function(){const canvas=this;return {fillRect(){},drawImage(img){canvas.testSource=img.src}}};
+  const drawings=[],labels=[];
+  w.HTMLCanvasElement.prototype.getContext=function(){const canvas=this;return {fillRect(){},fillText(text,x,y){labels.push({text,x,y})},drawImage(img,...args){canvas.testSource=img.src;drawings.push({source:img.src,args})}}};
   w.HTMLCanvasElement.prototype.toDataURL=function(){return prepared(this.testSource)};
+  w.HTMLCanvasElement.prototype.toBlob=function(callback){callback(new Blob(['sheet'],{type:'image/png'}))};
+  w.URL.createObjectURL=()=> 'blob:test-export';w.URL.revokeObjectURL=()=>{};
+  w.HTMLAnchorElement.prototype.click=function(){this.testClicked=true};
+  w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
   let next=0;const widgets=new Map();
   w.turnstile={render(_node,options){const id=next++;widgets.set(id,options);queueMicrotask(()=>options.callback('one-time-test-token'));return id},reset(id){widgets.get(id)?.callback('new-test-token')},remove(id){widgets.delete(id)}};
-  w.fetch=async(url,init)=>{calls.push({url,init});if(url.endsWith('/health'))return Response.json({ready:true,features:['tryon','character']});return infer?infer(url,init):Response.json({ok:true,image})};
+  w.fetch=async(url,init)=>{calls.push({url,init});if(url.endsWith('/health'))return Response.json({ready:true,features:['tryon','character','character-sheet']});return infer?infer(url,init):Response.json({ok:true,image,...(url.endsWith('/character-view')?{view:JSON.parse(init.body).view}:{})})};
   w.eval(script);const $=id=>w.document.getElementById(id);
-  async function consent(kind) {$(kind+'Consent').checked=true;$(kind+'Consent').dispatchEvent(new w.Event('change'));await until(()=>!$(kind==='tryon'?'generateTryon':'generateCharacter').disabled);}
-  return {dom,w,$,calls,consent,open:()=>w.FIT_TRYON.open(selection)};
+  async function consent(kind) {$(kind+'Consent').checked=true;$(kind+'Consent').dispatchEvent(new w.Event('change'));await until(()=>!$({tryon:'generateTryon',character:'generateCharacter',sheet:'generateSheet'}[kind]).disabled);}
+  return {dom,w,$,calls,consent,drawings,labels,open:()=>w.FIT_TRYON.open(selection)};
+}
+
+async function readySheet(s) {
+  s.open();await until(()=>!s.$('tryonConsent').disabled);await s.consent('tryon');s.$('generateTryon').click();await until(()=>!s.$('nextCharacter').hidden);
+  await s.consent('character');s.$('generateCharacter').click();await until(()=>!s.$('sheetWorkspace').hidden);
 }
 
 test('Missing setup disables both generations without transmitting the uploaded photo',async()=>{
@@ -53,5 +63,64 @@ test('Provider errors never unlock character generation or fabricate a result; r
   const s=setup({infer:async()=>Response.json({ok:false,error:'테스트 생성 실패'},{status:502})});try{
     s.open();await until(()=>!s.$('tryonConsent').disabled);await s.consent('tryon');s.$('generateTryon').click();await until(()=>s.$('tryonStatus').textContent==='테스트 생성 실패');
     assert.equal(s.$('tryonResult').hidden,true);assert.equal(s.$('downloadTryon').hidden,true);assert.equal(s.$('generateCharacter').disabled,true);assert.equal(s.$('generateTryon').disabled,false);assert.equal(s.$('cancelTryon').hidden,true);
+  }finally{s.dom.window.close()}
+});
+
+test('Approval gates a sheet; exactly 15 requests share one anchor and produce 16 independently labelled cells',async()=>{
+  const s=setup();try{
+    await readySheet(s);assert.equal(s.$('generateSheet').disabled,true);assert.equal(s.$('downloadSheet').disabled,true);assert.equal(s.$('sheetGrid').children.length,16);
+    await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='16 / 16');await until(()=>s.$('cancelSheet').hidden);
+    const calls=s.calls.filter(c=>c.url.endsWith('/character-view'));assert.equal(calls.length,15);
+    assert.deepEqual(calls.map(c=>JSON.parse(c.init.body).view),Array.from({length:15},(_,i)=>i+1));
+    for(const c of calls){const data=JSON.parse(c.init.body);assert.equal(data.anchor,prepared(image));assert.equal(data.original,prepared(selection.photo));assert.equal(data.approved,true);assert.ok(data.token);}
+    assert.equal(new Set(calls.map(c=>JSON.parse(c.init.body).requestId)).size,15);
+    assert.equal(s.$('downloadSheet').disabled,false);assert.equal(s.$('generateSheet').disabled,true);
+    assert.equal(s.$('sheetGrid').querySelectorAll('img').length,16);
+    s.$('sheetGrid').children[8].click();assert.equal(s.$('sheetDialog').open,true);assert.match(s.$('sheetDialogTitle').textContent,/뒷모습/);
+    const before=s.calls.length;s.$('downloadSheet').click();await until(()=>s.labels.length===16);await until(()=>!s.$('downloadSheet').disabled);
+    assert.equal(s.calls.length,before,'compositing and download must not generate more images');assert.equal(s.labels[15].x,2688);assert.equal(s.labels[15].y,4328);
+  }finally{s.dom.window.close()}
+});
+
+test('Failed sheet stops immediately; explicit resume keeps completed images and retries only missing views',async()=>{
+  let fail=true;const s=setup({infer:async(url,init)=>{
+    const view=JSON.parse(init.body).view;
+    if(url.endsWith('/character-view')&&view===3&&fail)return Response.json({ok:false,error:'테스트 중단'},{status:502});
+    return Response.json({ok:true,image,view});
+  }});try{
+    await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>s.$('sheetStatus').textContent.includes('테스트 중단'));
+    assert.equal(s.$('sheetCount').textContent,'3 / 16');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,3);
+    assert.equal(s.$('downloadSheet').disabled,true);fail=false;s.$('generateSheet').click();await until(()=>s.$('sheetCount').textContent==='16 / 16');
+    const views=s.calls.filter(c=>c.url.endsWith('/character-view')).map(c=>JSON.parse(c.init.body).view);
+    assert.deepEqual(views,[1,2,3,...Array.from({length:13},(_,i)=>i+3)]);
+  }finally{s.dom.window.close()}
+});
+
+test('Replacing the selected person during a view request discards all previous sheet images and ignores late results',async()=>{
+  let finish;const s=setup({infer:async(url)=>url.endsWith('/character-view')?new Promise(resolve=>finish=resolve):Response.json({ok:true,image})});try{
+    await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>!!finish);
+    s.w.FIT_TRYON.open({...selection,photo:'blob:new-person'});finish(Response.json({ok:true,image,view:1}));await new Promise(setImmediate);
+    assert.equal(s.$('sheetWorkspace').hidden,true);assert.equal(s.$('sheetGrid').children.length,0);assert.equal(s.$('characterResult').hasAttribute('src'),false);
+    assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,1);
+  }finally{s.dom.window.close()}
+});
+
+test('Cancellation preserves completed angles and does not start subsequent requests',async()=>{
+  let finish;const s=setup({infer:async(url)=>url.endsWith('/character-view')?new Promise(resolve=>finish=resolve):Response.json({ok:true,image})});try{
+    await readySheet(s);await s.consent('sheet');s.$('generateSheet').click();await until(()=>!!finish);
+    s.$('cancelSheet').click();finish(Response.json({ok:true,image,view:1}));await until(()=>s.$('cancelSheet').hidden);
+    assert.equal(s.$('sheetCount').textContent,'2 / 16');assert.equal(s.calls.filter(c=>c.url.endsWith('/character-view')).length,1);assert.equal(s.$('generateSheet').disabled,false);
+  }finally{s.dom.window.close()}
+});
+
+test('Adding and removing a close-up clears the old anchor and sheet; only consented generation sends the face',async()=>{
+  const s=setup();try{
+    await readySheet(s);const before=s.calls.length;
+    Object.defineProperty(s.$('characterFace'),'files',{value:[new s.w.File(['fixture'],'face.jpg',{type:'image/jpeg'})],configurable:true});
+    s.$('characterFace').dispatchEvent(new s.w.Event('change'));await until(()=>!s.$('facePreviewWrap').hidden);
+    assert.equal(s.calls.length,before);assert.equal(s.$('sheetWorkspace').hidden,true);assert.equal(s.$('characterResult').hasAttribute('src'),false);
+    assert.equal(s.$('characterConsent').checked,false);await s.consent('character');s.$('generateCharacter').click();await until(()=>!s.$('sheetWorkspace').hidden);
+    assert.equal(JSON.parse(s.calls.at(-1).init.body).face,prepared('blob:test-export'));
+    s.$('removeFace').click();assert.equal(s.$('sheetWorkspace').hidden,true);assert.equal(s.$('facePreviewWrap').hidden,true);assert.equal(s.$('sheetGrid').children.length,0);
   }finally{s.dom.window.close()}
 });

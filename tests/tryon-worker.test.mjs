@@ -2,10 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHandler, TryOnGate } from '../backend/tryon/worker.mjs';
 import catalog from '../backend/tryon/catalog.json' with { type: 'json' };
-import { STYLE_REFERENCE } from '../backend/tryon/character-style.mjs';
 
 // Tiny fixture used only by automated tests. It is never presented as a try-on result to a visitor.
 const fixture = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jJ1cAAAAASUVORK5CYII=';
+const taggedFixture = tag => 'data:image/png;base64,' + Buffer.concat([Buffer.from(fixture.split(',')[1],'base64'),Buffer.from(tag)]).toString('base64');
 const origin = 'https://the-pit.site';
 const payload = {photo:fixture,itemId:catalog[0].id,consent:true,token:'test-token',requestId:'11111111-1111-4111-8111-111111111111'};
 const env = {FAL_KEY:'test-secret',TURNSTILE_SECRET:'turnstile-test-secret',TRYON_GATE:{idFromName:name=>name,get:()=>({fetch:async()=>new Response('{}')})}};
@@ -39,16 +39,37 @@ test('Failed/replayed captcha or mismatched hostname never reaches the paid prov
   }
 });
 
-test('Character stage receives the dressed person, original identity and first-party style in that order',async()=>{
+test('Character prioritizes original identity and never sends the unrelated animation thumbnail',async()=>{
   const {network,calls}=networkStub();
   const response=await createHandler(network)(request({...payload,original:fixture,scene:'city',prompt:'override',image_urls:['http://internal']},origin,'character'),env);
   assert.equal(response.status,200);assert.equal((await response.json()).ok,true);
   const model=calls.find(call=>call.url.includes('/flux-2-pro/edit')),body=JSON.parse(model.init.body);
-  assert.deepEqual(body.image_urls,[fixture,fixture,STYLE_REFERENCE]);
+  assert.deepEqual(body.image_urls,[fixture,fixture]);
   assert.match(body.prompt,/Preserve this exact outfit/);assert.match(body.prompt,/original photograph/);
   assert.match(body.prompt,/city street/);assert.ok(!body.prompt.includes('override'));
   assert.equal(body.sync_mode,true);assert.equal(body.enable_safety_checker,true);
-  assert.deepEqual(body.image_size,{width:864,height:1152});assert.equal(calls.length,2);
+  assert.deepEqual(body.image_size,{width:768,height:1024});assert.equal(calls.length,2);
+});
+
+test('All fifteen angles reuse the approved anchor with original identity; client prompt cannot override directions',async()=>{
+  const original=taggedFixture('original'),face=taggedFixture('face'),anchor=taggedFixture('anchor');
+  for(let view=1;view<16;view++){
+    const {network,calls}=networkStub();
+    const response=await createHandler(network)(request({...payload,original,face,anchor,approved:true,view,prompt:'override'},origin,'character-view'),env);
+    const result=await response.json();assert.equal(response.status,200);assert.equal(result.view,view);
+    const model=JSON.parse(calls.find(call=>call.url.includes('/flux-2-pro/edit')).init.body);
+    assert.deepEqual(model.image_urls,[original,face,fixture,anchor]);
+    assert.ok(model.prompt.includes(`orientation ${view*22.5} degrees`));assert.match(model.prompt,/Image 4 is the approved FRONT/);
+    assert.ok(!model.prompt.includes('override'));assert.equal(calls.length,2);
+  }
+});
+
+test('Missing approval, invalid direction or invalid reference is rejected before network or quota use',async()=>{
+  const base={...payload,original:fixture,anchor:fixture,approved:true,view:1};
+  for(const data of [{...base,approved:false},{...base,anchor:undefined},{...base,face:'https://untrusted.example/face.jpg'},...[0,16,-1,1.5,'1',null].map(view=>({...base,view}))]){
+    const {network,calls}=networkStub();const response=await createHandler(network)(request(data,origin,'character-view'),env);
+    assert.equal(response.status,400);assert.equal(calls.length,0);
+  }
 });
 
 test('Missing original photo or unknown character scene is rejected before any paid request',async()=>{

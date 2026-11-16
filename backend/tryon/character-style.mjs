@@ -1,19 +1,23 @@
-// A first-party THE PIT reference guides rendering only, never the visitor's identity or outfit.
-export const STYLE_REFERENCE = 'https://the-pit.site/assets/thumb-find-your-color.webp';
+// Identity comes from the visitor's photos, never an unrelated animation poster.
 export const SCENES = Object.freeze({
-  studio: 'A refined warm ivory studio backdrop, soft golden rim light and a subtle grounding shadow. Keep the original pose and crop. Let the face and outfit be the focus.',
-  city: 'A softly defocused colorful European-inspired city street at golden hour, with the warm amber glow and cheerful atmosphere of the style reference. Keep the subject prominent and the original pose and crop.',
-  poster: 'A cinematic character portrait with a deep charcoal-to-amber background and a restrained swirl of golden particles behind the subject. Keep the original pose and crop. No props in hands.',
+  studio: 'Plain warm ivory studio backdrop, even neutral lighting and a subtle grounding shadow.',
+  city: 'A softly defocused city street in warm daylight. Keep the single subject prominent. No other people or props.',
+  poster: 'A quiet charcoal studio backdrop with soft rim light. No text or props.',
 });
-export function characterPrompt(scene) {
+export function characterPrompt(scene, { face = false, view = null } = {}) {
   if (!Object.hasOwn(SCENES, scene)) return null;
+  if (view !== null && (!Number.isInteger(view) || view < 1 || view > 15)) return null;
+  const outfitIndex = face ? 3 : 2, anchorIndex = outfitIndex + 1;
   return [
-    'Create one polished THE PIT animated character still, using the supplied images in this exact role order.',
-    'Image 1 is the person already wearing the chosen garment. Preserve this exact outfit: garment type, color, neckline, sleeves, hem, fabric pattern, layers and visible accessories. Do not replace the outfit with clothing from any other image.',
-    'Image 2 is the original photograph of the same person. Preserve their recognizable facial structure, apparent age, skin tone, hairstyle, hair color, expression and body build. Use it only to recover identity details; ignore its clothing.',
-    'Image 3 is the THE PIT visual style reference ONLY. Use its dimensional stylized animation, expressive but proportionate eyes, sculpted soft facial planes, detailed hair strands, tactile fabrics, warm cinematic lighting, gentle bloom and rich colors.',
-    'Do not copy any reference character, face, red outfit, mascot, logo, lettering, video duration badge or composition from image 3. Do not turn the person into the female reference character. Preserve the person’s own presentation and silhouette.',
-    'Retain the same visible body coverage as image 1. Do not slim, enlarge, undress or change the person’s body. Maintain plausible anatomy, hands and fingers. No invented text, branding or watermark. This is a single still image, not a collage or comparison.',
-    SCENES[scene],
-  ].join(' ');
+    'Create ONE identity-faithful, lightly stylized 3D character image of this exact real person. Recognizable likeness has priority over animation aesthetics.',
+    'Image 1 is the original photograph and authoritative source of identity and body proportions. Preserve the exact face outline, jaw width, cheek volume, eye size and spacing, eyelids, eyebrows, nose bridge and tip, mouth width, lip shape, ears, skin tone, apparent age, hairline, hair parting and hair volume. Preserve glasses including thin/thick frame, lens shape and bridge. Do not beautify or redesign the person.',
+    face ? 'Image 2 is an additional close-up of the SAME person; use its visible facial details to reinforce likeness, never its clothing.' : '',
+    `Image ${outfitIndex} is the try-on image. Preserve this exact outfit: color, neckline, sleeve and hem lengths, fabric pattern, layers and visible accessories. Use this image for clothing only; if its face differs from image 1, image 1 wins.`,
+    'Render natural human facial proportions with restrained 3D shading and fine fabric texture. NO oversized eyes, inflated ears, round red nose, thick invented eyebrows, cartoon grin, quiff, swept-up hair, chibi head, caricature, age change or body slimming. Keep the source hair parting and glasses. Do not replace the person with a generic cartoon man or woman.',
+    view === null
+      ? 'Create the FRONT reference view: camera at eye level, head and torso square to camera, neutral expression and relaxed arms alongside the torso. Preserve the original body build and head-to-body ratio. Show the same visible body coverage as the try-on image, with generous margin above the head and below the visible body. Do not invent feet or shoes when they are outside the source frame.'
+      : `Image ${anchorIndex} is the approved FRONT character. Lock its character design, clothing, body scale, framing, rendering style and identity. Rotate this SAME character as a rigid whole around the vertical axis; do not just rotate the head. Camera stays level, same distance, no tilt or foreshortening. Render orientation ${view * 22.5} degrees from front towards the SUBJECT'S LEFT side (0=front, 90=left profile with nose pointing to the right edge of the picture, 180=back with no face visible, 270=right profile with nose pointing to the left edge). At ${view * 22.5} degrees show only the anatomically visible features. Do not mirror an earlier image. Keep hair parting, asymmetrical clothing and glasses consistent. Infer unseen surfaces conservatively without adding logos, tattoos or accessories. Match the approved reference's vertical crop and subject scale.`,
+    view === null ? SCENES[scene] : 'Plain warm ivory studio background with soft even neutral lighting.',
+    'Single centered character only. No collage, panels, labels, text, watermark, mascot or additional people. Plausible hands and anatomy. Minimal perspective distortion.',
+  ].filter(Boolean).join(' ');
 }
