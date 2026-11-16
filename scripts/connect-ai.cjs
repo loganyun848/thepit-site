@@ -17,10 +17,10 @@ function deviceLoginDetails(output) {
   const clean = output.replace(/\x1b\[[0-9;]*m/g, '');
   const code = clean.match(/and enter the code:\s*([A-Za-z0-9-]{4,32})/i)?.[1];
   if (!code) return null;
-  const candidate = clean.match(/https:\/\/dash\.cloudflare\.com\/oauth2\/device(?:\?[^\s]+)?(?=\s|$)/)?.[0];
+  const candidate = clean.match(/https:\/\/dash\.cloudflare\.com\/oauth2\/device(?:\/verify)?(?:\?[^\s]+)?(?=\s|$)/)?.[0];
   if (!candidate) return null;
   const url = new URL(candidate);
-  if (url.hostname !== 'dash.cloudflare.com' || url.pathname !== '/oauth2/device') return null;
+  if (url.hostname !== 'dash.cloudflare.com' || !['/oauth2/device', '/oauth2/device/verify'].includes(url.pathname)) return null;
   url.search = '';
   url.hash = '';
   url.searchParams.set('user_code', code);

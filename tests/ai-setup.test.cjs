@@ -5,6 +5,7 @@ const {createServer,publicConfig,ensureWidget,deviceLoginDetails,loginFailureMes
 test('Device login displays only a verified Cloudflare device URL and a user confirmation code',()=>{
   const output='To authorize Wrangler, please visit:\n https://dash.cloudflare.com/oauth2/device\n\nand enter the code:\n AB12-CD34\nYou have 5 minutes to approve this request.';
   assert.deepEqual(deviceLoginDetails(output),{loginUrl:'https://dash.cloudflare.com/oauth2/device?user_code=AB12-CD34',loginCode:'AB12-CD34'});
+  assert.deepEqual(deviceLoginDetails(output.replace('/oauth2/device','/oauth2/device/verify')),{loginUrl:'https://dash.cloudflare.com/oauth2/device/verify?user_code=AB12-CD34',loginCode:'AB12-CD34'});
   assert.equal(deviceLoginDetails(output.replace('dash.cloudflare.com','attacker.example')),null);
   assert.equal(deviceLoginDetails(output.replace('/oauth2/device','/oauth2/device-evil')),null);
   assert.equal(deviceLoginDetails('https://dash.cloudflare.com/oauth2/auth?state=old'),null);
