@@ -1,7 +1,7 @@
 import CATALOG from './catalog.json' with { type: 'json' };
 import { CHARACTER_APPEARANCE, characterPrompt } from './character-style.mjs';
 import { submitModel, modelStatus, modelFile } from './avatar-model.mjs';
-import { productionRoute } from './production.mjs';
+import { productionRoute, signIntake } from './production.mjs';
 export { ProductionQueue } from './production.mjs';
 
 const MODEL_URL = 'https://fal.run/fal-ai/fashn/tryon/v1.6';
@@ -49,7 +49,7 @@ export function createHandler(network = fetch) {
     const production = await productionRoute(request,env,network,cors);
     if (production) return production;
     const ready = !!(env.FAL_KEY && env.TURNSTILE_SECRET && env.TRYON_GATE);
-    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet', 'avatar-model', 'motion-production'], productionReady:!!(env.PRODUCTION_KEY&&env.PRODUCTION_QUEUE), characterAppearance: CHARACTER_APPEARANCE, revision:'20261117-motion1', language:'en' }, 200, cors);
+    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet', 'avatar-model', 'motion-production'], productionReady:!!(env.PRODUCTION_KEY&&env.PRODUCTION_QUEUE), characterAppearance: CHARACTER_APPEARANCE, revision:'20261117-intake1', language:'en' }, 200, cors);
     if (!['/tryon', '/character', '/character-view', '/character-model', '/character-model/status', '/character-model/file'].includes(url.pathname) || request.method !== 'POST') return json({ ok: false, error: 'This request was not found.' }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ ok: false, error: 'Please submit your request from the website.' }, 403, cors);
     if (!ready) return json({ ok: false, error: 'The AI try-on service is being connected.' }, 503, cors);
@@ -136,7 +136,8 @@ export function createHandler(network = fetch) {
         throw fail(502, 'The AI service could not generate an image. Please try again shortly.');
       }
       const output = await response.json(); const image = validatePhoto(output.images?.[0]?.url, 10 * 1024 * 1024);
-      return json({ ok: true, image, ...(isCharacter ? {appearance:CHARACTER_APPEARANCE} : {}), ...(isView ? {view:data.view} : {}) }, 200, cors);
+      const intake = isCharacter && !isView ? {intakeTicket:await signIntake(data.requestId,image,env.FAL_KEY),productionId:'app-'+data.requestId} : {};
+      return json({ ok: true, image, ...intake, ...(isCharacter ? {appearance:CHARACTER_APPEARANCE} : {}), ...(isView ? {view:data.view} : {}) }, 200, cors);
     } catch (error) {
       if (reservation && (releaseQuota || error.releaseQuota)) {
         try {

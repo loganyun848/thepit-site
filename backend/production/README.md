@@ -4,6 +4,19 @@ Completed Fit Room GLB → authenticated queue → private Python worker → Ble
 
 This pipeline makes **no image/video generation API calls**. It does not use Higgsfield. The existing Fit Room image/3D generation stages still use their existing providers and credits.
 
+## Visual production desk
+
+Run `py -3.14 dashboard.py --open` to open `http://127.0.0.1:8767` on the production computer. The dashboard binds only to loopback. It is not a public website or a remote administration endpoint.
+
+- Real receiver heartbeat, last successful relay contact and local received-job counts.
+- Actual stages: receiving, validating, rigging, applying motion, rendering, verifying and awaiting review. Rendering progress uses Blender's frame-write callback, not a timer.
+- Inline MP4 playback, seeking and downloads for MP4, Blender and animated GLB.
+- Start receiver, pause new claims after the current job, resume receiving and open the output folder.
+- Synthetic QA sample shown separately and excluded from production counts.
+- Host/Origin checks, a per-session control token, file allowlist and no raw secret/log endpoints. The browser never receives the production API secret or job leases.
+
+The dashboard reads local job files; its counts are received jobs on this computer, **not the unclaimed cloud queue**. Pausing reception does not cancel or suspend a render already underway. Closing the browser does not stop the background receiver.
+
 ## Operator workflow
 
 1. Start `start-worker.ps1` on the production workstation. Keep the workstation awake and connected. The worker makes outbound HTTPS requests only; no router ports or public local server are needed.
@@ -82,3 +95,11 @@ node --test tests/production.test.mjs backend/tryon/tests/production-ui.test.mjs
 py -3.14 -m unittest discover -s backend/production/tests -v
 py -3.14 backend/production/worker.py --local tests/motion-fixture.glb --fixture
 ```
+
+## Application intake and automatic motion handoff
+
+A successful Fit Room email now transfers the generated front reference to the private relay using a seven-day signed capability tied to that exact image. The receiver saves it locally and shows `Waiting for 3D model`. Original source photos, contact details and written stories are not copied into this queue. References are chunked in private storage, limited by the generation capability, deduplicated per front generation and removed from the relay after seven days. Local production retention is 30 days.
+
+The application includes explicit notice of the subsequent completed-model transfer. When its 3D model is ready in the same tab, Fit Room automatically enqueues it with the application identifier. The local worker claims only completed models. Existing manual model transfer remains available. No application operation starts a paid reference or 3D generation. Transfer failure has a separate retry that never resends the application email.
+
+An application with only an image cannot produce articulated 3D motion. Its three remaining views and 3D reconstruction still require the studio consent and generation steps. Historical email applications need an operator recovery entry; they are not retrospectively treated as rendered jobs or complete models.

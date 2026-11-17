@@ -4,6 +4,7 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+import io
 
 spec=importlib.util.spec_from_file_location('production_worker',Path(__file__).resolve().parents[1]/'worker.py')
 worker=importlib.util.module_from_spec(spec)
@@ -11,6 +12,19 @@ spec.loader.exec_module(worker)
 
 
 class SourceValidation(unittest.TestCase):
+    def test_application_reference_is_saved_without_rendering(self):
+        class Relay:
+            def post(self,route,data):
+                self.assert_route=route
+                return {'jobs':[{'jobId':'app-reference-test','kind':'application','created':1794885600000,'height':180}]}
+            def request(self,route,data):
+                return io.BytesIO(b'\xff\xd8\xff\x00')
+        with tempfile.TemporaryDirectory() as temp:
+            worker.sync_intakes(Relay(),Path(temp))
+            folder=Path(temp)/'app-reference-test'
+            self.assertEqual(json.loads((folder/'progress.json').read_text())['stage'],'waiting_model')
+            self.assertTrue((folder/'avatar-front.jpg').exists())
+            self.assertFalse((folder/'preview.mp4').exists())
     def write_glb(self,path,document):
         content=json.dumps(document).encode()
         content+=b' '*((-len(content))%4)

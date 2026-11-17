@@ -6,7 +6,7 @@
   const loadStatus = document.getElementById('fitApplicationStatus');
   const retry = document.getElementById('retryApplication');
   const nav = document.getElementById('fitApplyLink');
-  let draft = null, revision = 0, loading = null, controller = null;
+  let draft = null, revision = 0, loading = null, controller = null, submittedFront = '', sendingDraft = null;
   const imagePattern = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
   const labels = ['Front', 'Left', 'Back', 'Right'];
   const stages = { front: 'Front-view avatar ready', references: 'Four reference views ready', model: '3D avatar ready' };
@@ -38,14 +38,21 @@
       const summary = document.createElement('div'); summary.className = 'fit-application-summary'; summary.id = 'fitApplicationSummary';
       clone.querySelector('#applyForm').before(summary);
       clone.querySelector('#doneYoutube').href = window.THEPIT_CONFIG.YOUTUBE_CHANNEL_URL;
-      clone.querySelector('.form__fine').textContent = 'Your application, selected photos and the avatar references shown above are sent to ceo@lecple.com through FormSubmit. 3D model files are not attached; save them from the avatar studio.';
+      clone.querySelector('.form__fine').textContent = 'Submit sends your application to ceo@lecple.com and transfers your generated front avatar to our private production desk. Once you finish the 3D model, it transfers automatically for a five-second motion preview. Additional AI generation requires your separate approval in the studio.';
       const privacy = clone.querySelector('[name="agreePrivacy"]').closest('label').querySelector('span');
-      privacy.append(document.createTextNode(' This includes the generated avatar references shown above.'));
+      privacy.append(document.createTextNode(' This includes transferring the generated front avatar, project height and completed 3D model to the LECPLE production desk for a five-second preview.'));
       clone.querySelector('#doneMsg').textContent = 'Your application and avatar references have been received. We will contact you at the email address you entered.';
+      const motion=document.createElement('div');motion.className='fit-application-summary';motion.id='applicationMotion';motion.hidden=true;
+      const motionTitle=document.createElement('h3');motionTitle.textContent='Next · Your five-second motion preview';
+      const motionStatus=document.createElement('p');motionStatus.id='applicationMotionStatus';motionStatus.setAttribute('role','status');
+      const motionNext=document.createElement('a');motionNext.id='applicationMotionNext';motionNext.className='btn btn--gold';
+      const motionRetry=document.createElement('button');motionRetry.type='button';motionRetry.id='applicationMotionRetry';motionRetry.className='btn btn--ghost';motionRetry.textContent='Retry production transfer';motionRetry.hidden=true;motionRetry.addEventListener('click',()=>void window.THEPIT_PRODUCTION?.retry());
+      motion.append(motionTitle,motionStatus,motionNext,motionRetry);clone.querySelector('#doneBox').append(motion);
       content.replaceChildren(clone);
       controller = window.THEPIT_APPLICATION.mount(content, {
         beforeSubmit(data) {
           if (!draft) throw Error('Your avatar has changed. Finish generating the new avatar before applying.');
+          sendingDraft={...draft,images:[...draft.images]};data.productionId=draft.productionId||'';
           data.source = 'Fit Room'; data.avatarStage = stages[draft.stage];
           data.outfit = draft.outfit; data.referenceViews = draft.images.filter(Boolean).length;
           data.modelDelivery = draft.stage === 'model' ? '3D model generated; model file not attached' : 'Image references only; no 3D model attached';
@@ -53,12 +60,30 @@
             if (dataUrl) data.photos.push({ key: 'avatar_' + labels[i].toLowerCase(), dataUrl });
           });
         },
-        afterReset: suggest
+        afterSuccess() {
+          if(!sendingDraft||draft?.images[0]!==sendingDraft.images[0])return;
+          submittedFront=sendingDraft.images[0];showMotion();
+          void window.THEPIT_PRODUCTION?.applicationSubmitted(sendingDraft);
+        },
+        afterReset() {submittedFront='';suggest();}
       });
       loadStatus.textContent = '';
     })();
     try { await loading; } finally { loading = null; }
   }
+  function showMotion() {
+    const panel=content.querySelector('#applicationMotion');if(!panel||!draft)return;
+    panel.hidden=false;
+    const next=content.querySelector('#applicationMotionNext');
+    next.href=draft.stage==='front'?'#sheetWorkspace':draft.stage==='references'?'#avatarModelWorkspace':'#productionWorkspace';
+    next.textContent=draft.stage==='front'?'Continue · Create the other three views ↑':draft.stage==='references'?'Continue · Create the 3D model ↑':'View motion production status ↑';
+    content.querySelector('#applicationMotionStatus').textContent=draft.stage==='model'?'Connecting the completed model to production…':'Email sent. Preparing the production receipt. To animate a moving body, complete the four references and 3D model. No new AI generation starts automatically.';
+    content.querySelector('#doneMsg').textContent='Your application email has been sent. You do not need to submit it again.';
+  }
+  window.addEventListener('production:status',event=>{
+    const node=content.querySelector('#applicationMotionStatus');if(node)node.textContent=event.detail.text;
+    const button=content.querySelector('#applicationMotionRetry');if(button)button.hidden=!event.detail.error;
+  });
   function renderSummary() {
     const summary = content.querySelector('#fitApplicationSummary');
     const title = document.createElement('h3'); title.textContent = stages[draft.stage];
@@ -84,6 +109,7 @@
     try {
       await mount();
       if (version !== revision || !draft) return;
+      if(submittedFront===draft.images[0]){renderSummary();showMotion();return;}
       controller.reopen(); suggest(); renderSummary();
       history.replaceState(null, '', '#apply');
       section.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
@@ -98,7 +124,7 @@
     revision++;
     const value = event.detail;
     if (!value) {
-      draft = null; section.hidden = true; controller?.clearSuggestions();
+      draft = null; submittedFront='';sendingDraft=null;section.hidden = true; controller?.clearSuggestions();
       content.querySelector('#fitApplicationSummary')?.replaceChildren();
       nav.href = 'index.html#apply';
       return;

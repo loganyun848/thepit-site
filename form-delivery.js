@@ -9,7 +9,7 @@
     agreeSelf: "Photo ownership confirmation", agreePortrait: "Likeness consent", agreePrivacy: "Privacy consent", agreeAge: "Age confirmation",
     agreeNews: "News consent", topic: "Topic", message: "Message", submittedAt: "Submitted at",
     source: "Application source", avatarStage: "Avatar stage", outfit: "Selected outfit",
-    referenceViews: "Avatar reference count", modelDelivery: "3D model delivery"
+    referenceViews: "Avatar reference count", modelDelivery: "3D model delivery", productionId: "Production reference"
   };
   function deliveryError(code, message) { const error = new Error(message); error.code = code; return error; }
   function readResponse(body, ok, appsScript) {

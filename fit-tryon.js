@@ -33,7 +33,7 @@
   }
   function discard(kind) {
     if (kind === 'character') resetSheet();
-    const stage = stages[kind]; stage.image = ""; resetChallenge(kind, true);
+    const stage = stages[kind]; stage.image = ""; stage.intakeTicket = ''; stage.productionId = ''; resetChallenge(kind, true);
     $(kind + "Result").hidden = true; $(kind + "Result").removeAttribute("src");
     $(stage.download).hidden = true; $(stage.download).removeAttribute("href");
     $(kind + "Placeholder").hidden = false; $(stage.cancel).hidden = true;
@@ -156,7 +156,7 @@
         $("nextCharacter").hidden = false;
         status("character", "Your try-on image is ready. Choose a background and consent to photo processing to create your avatar.");
       }
-      stage.image = result.image; $(kind + "Result").src = result.image;
+      stage.image = result.image; stage.intakeTicket=result.intakeTicket||''; stage.productionId=result.productionId||''; $(kind + "Result").src = result.image;
       $(kind + "Result").hidden = false; $(kind + "Placeholder").hidden = true;
       const ext = result.image.match(/^data:image\/(jpeg|png|webp)/)[1].replace("jpeg", "jpg");
       $(stage.download).href = result.image; $(stage.download).download = "THE-PIT-" + kind + "-" + selection.item.id + "." + ext; $(stage.download).hidden = false;
@@ -322,7 +322,7 @@
   function applicationResult(stage) {
     if (!sheet.images[0] || !sheet.refs || !state.selection) return null;
     const item = state.selection.item;
-    return { stage, images: [...sheet.images], original: sheet.refs.original, face: sheet.refs.face || '',
+    return { stage, images: [...sheet.images], intakeTicket:stages.character.intakeTicket||'', productionId:stages.character.productionId||'', original: sheet.refs.original, face: sheet.refs.face || '',
       outfit: item.brand + ' · ' + item.name + ' · ' + $('tryonSize').value,
       height: state.selection.user?.height || '', size: $('tryonSize').value };
   }

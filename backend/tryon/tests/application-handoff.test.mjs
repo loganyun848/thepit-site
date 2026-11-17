@@ -87,6 +87,22 @@ test('Reference and model completion updates the same form; explicit Submit atta
   } finally { s.dom.window.close(); }
 });
 
+test('email success authorizes production once; later references do not reopen submission',async()=>{
+ const s=setup();try{
+  const received=[];s.w.THEPIT_PRODUCTION={applicationSubmitted:d=>received.push(d)};
+  s.emit({...detail,intakeTicket:'signed-front',productionId:'app-front-test'});await settle();s.fill();
+  s.$('submitBtn').click();await settle();
+  assert.equal(received.length,1);assert.equal(s.deliveries.length,1);
+  assert.equal(s.deliveries[0].productionId,'app-front-test');
+  assert.equal(s.$('applicationMotion').hidden,false);
+  assert.equal(s.$('applicationMotionNext').getAttribute('href'),'#sheetWorkspace');
+  s.emit({...detail,intakeTicket:'signed-front',productionId:'app-front-test',stage:'references',images:[image,image,image,image]});await settle();
+  assert.equal(s.$('applyForm').hidden,true);assert.equal(s.$('doneBox').hidden,false);
+  assert.equal(s.$('applicationMotionNext').getAttribute('href'),'#avatarModelWorkspace');
+  assert.equal(s.deliveries.length,1);assert.equal(received.length,1);
+ }finally{s.dom.window.close();}
+});
+
 test('Changing the source clears stale attachments and keeps the entered story', async () => {
   const s = setup();
   try {

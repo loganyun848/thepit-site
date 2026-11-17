@@ -6,6 +6,7 @@ Run --watch for new jobs, --resume ID after interruption, or --local MODEL.glb.
 from __future__ import annotations
 
 import argparse
+import atexit
 import hashlib
 import json
 import os
@@ -23,6 +24,42 @@ import urllib.request
 ROOT = Path(__file__).resolve().parent
 MAX_MODEL = 100 * 1024 * 1024
 ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{8,100}$")
+
+
+class WorkerMonitor:
+    """Local-only telemetry. Credentials and raw provider responses are excluded."""
+    def __init__(self):
+        self.lock=threading.Lock()
+        self.stop=threading.Event()
+        self.state={'pid':os.getpid(),'startedAt':time.time(),'mode':'starting','jobId':None,'lastContact':None}
+        self.thread=threading.Thread(target=self.run,daemon=True)
+        self.thread.start()
+        atexit.register(self.close)
+
+    def update(self,**values):
+        with self.lock:
+            self.state.update(values)
+            atomic_json(ROOT/'runtime'/'worker-status.json',{**self.state,'heartbeat':time.time()})
+
+    def run(self):
+        while not self.stop.wait(2):
+            self.update()
+
+    def close(self):
+        self.stop.set()
+        self.thread.join(timeout=3)
+        self.update(mode='stopped',jobId=None)
+
+
+def pause_requested():
+    try:
+        return json.loads((ROOT/'runtime'/'control.json').read_text(encoding='utf-8')).get('paused') is True
+    except (OSError,ValueError):
+        return False
+
+
+def job_stage(directory,stage,**values):
+    atomic_json(directory/'progress.json',{'stage':stage,'updatedAt':time.time(),**values})
 
 
 def single_worker_lock():
@@ -136,6 +173,27 @@ def heartbeat(relay, job, stop):
             print('Status connection interrupted; local processing continues.', flush=True)
 
 
+def sync_intakes(relay, output):
+    """Receive confirmed application references, without pretending they are 3D jobs."""
+    for intake in relay.post('intakes', {}).get('jobs', []):
+        identity = intake.get('jobId', '')
+        if not ID_PATTERN.fullmatch(identity) or intake.get('kind') != 'application':
+            continue
+        directory = output / identity
+        if directory.is_symlink():
+            continue
+        directory.mkdir(parents=True, exist_ok=True)
+        atomic_json(directory / 'intake.json', intake)
+        atomic_json(directory / 'private-job.json', {'jobId':identity, 'created':intake['created'], 'height':intake.get('height')})
+        if not (directory / 'avatar-front.jpg').exists():
+            with relay.request('reference', {'id':identity}) as response:
+                image = response.read(10*1024*1024+1)
+            if len(image)>10*1024*1024 or not (image.startswith(b'\xff\xd8\xff') or image.startswith(b'\x89PNG\r\n\x1a\n') or image[:4]==b'RIFF' and image[8:12]==b'WEBP'):
+                raise ValueError('Invalid avatar reference.')
+            partial=directory/'avatar-front.part';partial.write_bytes(image);partial.replace(directory/'avatar-front.jpg')
+        job_stage(directory, 'waiting_model', message='Front avatar received. Complete the four reference views and 3D model in Fit Room. No video has been rendered yet.')
+
+
 def inspect_video(ffprobe, path):
     result = subprocess.run([ffprobe, '-v', 'error', '-count_frames', '-select_streams', 'v:0', '-show_entries',
         'stream=nb_read_frames,r_frame_rate,width,height:format=duration', '-of', 'json', str(path)],
@@ -149,6 +207,7 @@ def inspect_video(ffprobe, path):
 
 
 def render(job, directory, settings):
+    job_stage(directory,'validating')
     source = directory / 'source.glb'
     validate_glb(source)
     manifest = {'schema': 'thepit-motion-v1', 'jobId': job['jobId'], 'height': job['height'],
@@ -163,6 +222,7 @@ def render(job, directory, settings):
     Path(render_env['BLENDER_USER_CONFIG']).mkdir(parents=True, exist_ok=True)
     with (directory / 'render.log').open('w', encoding='utf-8') as log:
         subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=1800, env=render_env)
+    job_stage(directory,'verifying')
     video = directory / 'preview.mp4'
     result = inspect_video(settings['FFPROBE_PATH'], video)
     audit = json.loads((directory / 'render-audit.json').read_text(encoding='utf-8'))
@@ -170,6 +230,7 @@ def render(job, directory, settings):
         raise ValueError('Body deformation was not verified; no successful output is reported.')
     result['quality'] = 'NEEDS_REVIEW'
     atomic_json(directory / 'video-verification.json', result)
+    job_stage(directory,'ready',frame=120,totalFrames=120)
     return result
 
 
@@ -186,6 +247,7 @@ def process(relay, job, output, settings):
     try:
         relay.post('heartbeat', {'id': identity, 'lease': job['lease']})
         if not (directory / 'source.glb').exists():
+            job_stage(directory,'receiving')
             relay.download(job, directory / 'source.glb')
         marker = directory / 'video-verification.json'
         if marker.exists() and (directory / 'preview.mp4').exists():
@@ -194,10 +256,14 @@ def process(relay, job, output, settings):
             result = render(job, directory, settings)
         # A failed status update can be resumed without downloading or rendering again.
         atomic_json(directory / 'delivery-pending.json', result)
+        job_stage(directory,'reporting',frame=120,totalFrames=120)
         relay.post('finish', {'id': identity, 'lease': job['lease'], 'status': 'NEEDS_REVIEW', 'result': result})
         (directory / 'delivery-pending.json').unlink(missing_ok=True)
+        (directory / 'error.json').unlink(missing_ok=True)
+        job_stage(directory,'ready',frame=120,totalFrames=120)
         print(f'{identity}: 5-second video and Blender project ready for review.', flush=True)
     except Exception as error:
+        job_stage(directory,'delivery_pending' if (directory/'delivery-pending.json').exists() else 'failed')
         atomic_json(directory / 'error.json', {'type': type(error).__name__, 'message': str(error), 'at': time.time()})
         # Do not lose a completed render just because the relay is temporarily offline.
         if not (directory / 'delivery-pending.json').exists():
@@ -237,6 +303,7 @@ def main():
     args = parser.parse_args()
     settings = config()
     worker_lock = single_worker_lock()
+    monitor=WorkerMonitor()
     for name in ('BLENDER_PATH', 'FFPROBE_PATH'):
         if not Path(settings.get(name, '')).is_file():
             parser.error(f'Set {name} in backend/production/.env.')
@@ -244,10 +311,12 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     purge(output)
     if args.local:
+        monitor.update(mode='processing')
         if not 80 <= args.height <= 250 or not -6.284 <= args.yaw <= 6.284:
             parser.error('Invalid height or front rotation.')
         identity = 'local-' + str(time.time_ns())
         directory = output / identity
+        monitor.update(jobId=identity)
         directory.mkdir()
         shutil.copyfile(args.local, directory / 'source.glb')
         render({'jobId': identity, 'height': args.height, 'yaw': args.yaw, 'fixture': args.fixture}, directory, settings)
@@ -255,6 +324,7 @@ def main():
         return
     relay = Relay(settings.get('PRODUCTION_ENDPOINT', ''), settings.get('PRODUCTION_KEY', ''))
     if args.resume:
+        monitor.update(mode='processing',jobId=args.resume)
         if not ID_PATTERN.fullmatch(args.resume):
             parser.error('Invalid job ID.')
         job = json.loads((output / args.resume / 'private-job.json').read_text(encoding='utf-8'))
@@ -264,13 +334,23 @@ def main():
     while True:
         try:
             purge(output)
+            if args.watch and pause_requested():
+                monitor.update(mode='paused',jobId=None)
+                time.sleep(2)
+                continue
+            monitor.update(mode='waiting',jobId=None)
+            sync_intakes(relay, output)
             job = relay.post('claim', {})['job']
+            monitor.update(lastContact=time.time(),connection='connected')
             if job:
+                monitor.update(mode='processing',jobId=job['jobId'])
                 print(f"{job['jobId']}: source received; preparing wave preview.", flush=True)
                 process(relay, job, output, settings)
+                monitor.update(mode='waiting',jobId=None,lastContact=time.time())
             elif not args.watch:
                 print('No pending jobs.')
         except Exception as error:
+            monitor.update(mode='error',connection='check_required')
             print(f'Worker paused for this job: {type(error).__name__}. Inspect the private local log.', flush=True)
             if not args.watch:
                 raise

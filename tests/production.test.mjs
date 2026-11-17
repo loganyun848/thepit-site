@@ -1,11 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {ProductionQueue,productionRoute} from '../backend/tryon/production.mjs';
+import {ProductionQueue,productionRoute,signIntake} from '../backend/tryon/production.mjs';
 import {signTicket} from '../backend/tryon/avatar-model.mjs';
 
 function setup(){
-  let state,chain=Promise.resolve();
-  const storage={async get(){return structuredClone(state);},async put(_k,v){state=structuredClone(v);},async setAlarm(){},transaction(fn){const result=chain.then(()=>fn(storage));chain=result.catch(()=>{});return result;}};
+  const state=new Map();let chain=Promise.resolve();
+  const storage={async get(k){return structuredClone(state.get(k));},async put(k,v){state.set(k,structuredClone(v));},async delete(k){state.delete(k);},async setAlarm(){},transaction(fn){const result=chain.then(()=>fn(storage));chain=result.catch(()=>{});return result;}};
   const queue=new ProductionQueue({storage});
   const env={FAL_KEY:'test-only-model-secret',PRODUCTION_KEY:'test-only-operator-secret',PRODUCTION_QUEUE:{idFromName:n=>n,get:()=>({fetch:(url,init)=>queue.fetch(new Request(url,init))})}};
   let calls=0;
@@ -56,4 +56,26 @@ test('parallel claims lease a model once',async()=>{
   const responses=await Promise.all([s.direct('claim',{}),s.direct('claim',{})]);
   const results=await Promise.all(responses.map(r=>r.json()));
   assert.equal(results.filter(r=>r.job).length,1);
+});
+
+test('signed image intake waits for a model, keeps image private, and links one motion job',async()=>{
+  const s=setup(),image='data:image/jpeg;base64,/9j/AA==';
+  const intakeTicket=await signIntake('test-front-123',image,s.env.FAL_KEY);
+  assert.equal((await s.route('intake',{intakeTicket,image,stage:'front',height:180})).status,400);
+  assert.equal((await s.route('intake',{intakeTicket,image:image+'a',stage:'front',height:180,consent:true})).status,400);
+  const data={intakeTicket,image,stage:'front',height:180,consent:true};
+  const first=await(await s.route('intake',data)).json();
+  assert.equal(first.status,'WAITING_MODEL');assert.equal(first.jobId,'app-test-front-123');
+  assert.equal((await(await s.route('intake',data)).json()).jobId,first.jobId);
+  assert.equal((await(await s.route('claim',{},true)).json()).job,null);
+  assert.equal((await s.route('intakes')).status,401);
+  assert.equal((await s.route('reference',{id:first.jobId})).status,401);
+  const reference=await s.route('reference',{id:first.jobId},true);
+  assert.deepEqual(new Uint8Array(await reference.arrayBuffer()),new Uint8Array([255,216,255,0]));
+  const model=await(await s.route('enqueue',{ticket:await s.ticket(),intakeTicket,height:180,yaw:0,action:'wave-v1',consent:true})).json();
+  assert.equal(model.applicationId,first.jobId);
+  const list=await(await s.route('intakes',{},true)).json();
+  assert.equal(list.jobs.length,1);assert.equal(list.jobs[0].modelId,model.jobId);
+  assert.equal((await(await s.route('status',{receipt:first.receipt})).json()).status,'QUEUED');
+  assert.equal(s.calls(),1,'Only read an existing model; never generate one');
 });

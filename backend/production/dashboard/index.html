@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>THE PIT · Production Desk</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/dashboard.css"></head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Production Desk home"><span class="brand-mark">P<span></span></span><span>THE PIT<small>PRODUCTION DESK</small></span></a>
+    <div class="nav-label">WORKSPACE</div>
+    <nav aria-label="Workspace"><button class="nav-item active" id="overviewNav"><span>▦</span> Overview</button><button class="nav-item" id="jobsNav"><span>▤</span> Received jobs <b id="navCount">0</b></button><button class="nav-item" id="sampleNav"><span>▷</span> QA sample <small>TEST</small></button></nav>
+    <div class="sidebar-note"><div class="orbit"><span></span><i></i></div><strong>One model.<br>A new movement.</strong><p>Your private link between Fit Room and the production studio.</p><a href="https://the-pit.site/fit.html" target="_blank" rel="noopener noreferrer">Open Fit Room ↗</a></div>
+    <div class="local-label"><span class="dot"></span> LOCAL WORKSTATION<small>Media stays on this computer.</small></div>
+  </aside>
+  <main>
+    <header><div><div class="eyebrow">WORKSPACE / AVATAR MOTION</div><h1>Production overview<span>.</span></h1><p>Receive an avatar. Build its motion. Review the result.</p></div><div class="header-tools"><span class="live-badge" id="connectionBadge"><i></i> Connecting</span><button class="icon-button" id="refreshButton" aria-label="Refresh status">↻</button></div></header>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <section class="stats" aria-label="Production metrics">
+      <article class="stat receiver"><div><span>RECEIVER</span><i class="signal" id="receiverSignal"></i></div><strong id="receiverValue">Connecting</strong><small id="receiverDetail">Reading local receiver status…</small></article>
+      <article class="stat"><div><span>RECEIVED</span><span class="stat-icon">↓</span></div><strong id="receivedValue">0</strong><small>Production jobs on this computer</small></article>
+      <article class="stat"><div><span>IN PROGRESS</span><span class="stat-icon">⌁</span></div><strong id="activeValue">0</strong><small>Preparing or rendering</small></article>
+      <article class="stat"><div><span>READY FOR REVIEW</span><span class="stat-icon">✓</span></div><strong id="readyValue">0</strong><small>Verified five-second previews</small></article>
+    </section>
+    <section class="receiver-bar" aria-label="Receiver controls"><div class="receiver-icon">⇄</div><div class="receiver-copy"><strong id="receiverHeading">Your production connection</strong><p id="receiverDescription">The receiver checks for completed models from Fit Room.</p></div><div class="button-group"><button id="folderButton" class="button secondary">Open output folder ↗</button><button id="receiverButton" class="button primary" disabled>Connecting…</button></div></section>
+    <div class="workspace-grid">
+      <div class="left-column">
+        <section class="panel jobs-panel" id="jobsPanel">
+          <div class="panel-header"><div><span class="eyebrow">INCOMING WORK</span><h2>Received avatars <span class="count" id="jobsCount">0</span></h2></div><span class="subtle">Local history</span></div>
+          <div class="filter-row"><label class="search"><span>⌕</span><input id="jobSearch" type="search" placeholder="Search job ID" aria-label="Search received jobs"></label><select id="jobFilter" aria-label="Filter jobs"><option value="all">All statuses</option><option value="waiting">Waiting for 3D</option><option value="active">In progress</option><option value="ready">Ready for review</option><option value="failed">Needs attention</option></select></div>
+          <div class="job-list" id="jobList"></div>
+          <div class="empty-state" id="emptyJobs"><div class="inbox-illustration"><div class="inbox-outline">↓</div><span></span><i></i></div><h3>Ready for your first avatar.</h3><p>Submit your Fit Room application to receive its avatar here.<br>Complete the 3D model to start the five-second preview automatically.</p><button id="emptySampleButton" class="text-button">Explore the verified QA sample <span>↗</span></button></div>
+          <div class="panel-foot"><span class="dot small"></span><span id="queueFoot">Waiting for receiver status</span></div>
+        </section>
+        <section class="panel signal-panel"><div class="panel-header"><h2>Workstation signals</h2><span class="subtle">Live</span></div><div class="signal-row"><span class="signal-label">Receiver heartbeat</span><strong id="heartbeatTime">—</strong></div><div class="signal-row"><span class="signal-label">Last server contact</span><strong id="contactTime">—</strong></div><div class="signal-row"><span class="signal-label">Production tools</span><strong id="toolsStatus">Checking…</strong></div><div class="signal-row"><span class="signal-label">Output specification</span><strong>MP4 · 5 s · 24 fps</strong></div></section>
+      </div>
+      <section class="panel preview-panel" aria-label="Selected avatar preview">
+        <div class="panel-header"><div><span class="eyebrow">OUTPUT MONITOR</span><h2 id="previewTitle">Motion preview</h2></div><span id="previewBadge" class="pill">NO JOB SELECTED</span></div>
+        <div class="preview-stage" id="previewStage"><video id="videoPreview" controls loop playsinline preload="metadata" hidden aria-label="Five-second motion preview"></video><div id="previewPlaceholder"><img id="referencePreview" alt="Received front avatar reference" hidden /><div class="play-outline">▷</div><strong id="placeholderTitle">Your next motion starts here.</strong><p id="placeholderDetail">Select a received avatar to follow its progress<br>and review the finished five-second clip.</p></div><div class="preview-caption"><span id="previewSource">AVATAR → MOTION</span><span id="previewSpec">05 SEC / 24 FPS</span></div></div>
+        <div id="sampleNotice" class="sample-notice" hidden><b>SYNTHETIC QA SAMPLE</b><span>This mannequin verifies the pipeline. It is not a customer avatar.</span></div>
+        <div class="job-info"><span id="selectedJobLabel">No avatar selected</span><span id="selectedJobTime">—</span></div>
+        <div class="pipeline" id="pipeline" aria-label="Production stages">
+          <div data-step="0"><span>01</span><b>Receive</b></div><i></i><div data-step="1"><span>02</span><b>Rig</b></div><i></i><div data-step="2"><span>03</span><b>Animate</b></div><i></i><div data-step="3"><span>04</span><b>Render</b></div><i></i><div data-step="4"><span>05</span><b>Review</b></div>
+        </div>
+        <div class="progress-detail"><span id="stageDetail">Waiting for a production job</span><strong id="frameCount">— / 120 frames</strong></div><progress id="renderProgress" max="120" value="0" aria-label="Rendered frames"></progress>
+        <div class="deliverables"><div><strong>Production files</strong><small>Available when each file is saved</small></div><div id="downloadLinks"><span class="muted">MP4 · Blender · Animated GLB</span></div></div>
+        <p class="review-note" id="reviewNote">A motion preview is prepared for review. Joint placement and clothing deformation need a production check.</p>
+      </section>
+    </div>
+    <footer><span><span class="dot small"></span> Private production workspace</span><span id="updatedTime">Waiting for local data</span><span>THE PIT / LECPLE</span></footer>
+  </main>
+  <script src="/dashboard.js"></script>
+</body></html>

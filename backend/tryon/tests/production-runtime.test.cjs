@@ -18,5 +18,12 @@ test('production leases and validated results persist in the real SQLite Durable
   assert.equal((await call('heartbeat',{id:item.id,lease})).status,200);
   assert.equal((await call('finish',{id:item.id,lease,status:'NEEDS_REVIEW',result:{duration:5,frames:120,fps:24,bytes:2500,sha256:'b'.repeat(64)}})).status,200);
   const final=await(await call('lookup',{id:item.id})).json();assert.equal(final.status,'NEEDS_REVIEW');assert.equal(final.source,undefined);assert.equal(final.lease,undefined);
+  const image='data:image/jpeg;base64,'+Buffer.concat([Buffer.from([255,216,255]),Buffer.alloc(150000)]).toString('base64');
+  const intake=await call('intake',{id:'app-runtime-test',image,stage:'front',height:180});assert.equal(intake.status,202);
+  assert.equal((await(await call('claim',{})).json()).job,null,'Image intake must never be leased to the 3D renderer');
+  const reference=await call('reference',{id:'app-runtime-test'});assert.equal((await reference.arrayBuffer()).byteLength,150003,'Large reference survives chunked SQLite storage');
+  assert.equal((await(await call('intakes',{})).json()).jobs.length,1);
+  await call('link',{id:item.id,applicationId:'app-runtime-test'});
+  assert.equal((await(await call('lookup',{id:'app-runtime-test'})).json()).status,'NEEDS_REVIEW');
  }finally{await server.close();}
 });

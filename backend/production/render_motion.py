@@ -8,10 +8,17 @@ import json
 import math
 from pathlib import Path
 import sys
+import time
 
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 import numpy as np
+
+
+def progress(out,stage,**values):
+    target=out/'progress.json';temp=out/'progress.blender.tmp'
+    temp.write_text(json.dumps({'stage':stage,'updatedAt':time.time(),**values}),encoding='utf-8')
+    temp.replace(target)
 
 
 def bounds(mesh):
@@ -222,9 +229,12 @@ def main():
     out=Path(job['output']).resolve()
     if out!=manifest.parent or Path(job['source']).resolve().parent!=out:
         raise ValueError('All job files must stay in the production job directory.')
+    progress(out,'validating')
     mesh,points,height=import_model(job)
+    progress(out,'rigging')
     fitted=joints(points,height)
     rig=rig_model(mesh,fitted)
+    progress(out,'animating')
     animate(rig,height)
     audit=deformation_audit(mesh)
     scene=studio(height,job.get('fixture'))
@@ -251,7 +261,12 @@ def main():
     bpy.ops.export_scene.gltf(filepath=str(out/'animated.glb'),export_format='GLB',use_selection=True,export_animations=True,export_frame_range=True)
     (out/'rig-landmarks.json').write_text(json.dumps({'unit':'meters','method':'estimated-geometric-anchors','bones':fitted},indent=2),encoding='utf-8')
     (out/'render-audit.json').write_text(json.dumps({**audit,'bone_count':len(rig.data.bones),'quality':'NEEDS_REVIEW','fixture':bool(job.get('fixture'))},indent=2),encoding='utf-8')
+    progress(out,'rendering',frame=0,totalFrames=120)
+    def frame_written(scene):
+        progress(out,'rendering',frame=scene.frame_current,totalFrames=120)
+    bpy.app.handlers.render_write.append(frame_written)
     bpy.ops.render.render(animation=True)
+    bpy.app.handlers.render_write.remove(frame_written)
     print('MOTION_RENDER_COMPLETE')
 
 
