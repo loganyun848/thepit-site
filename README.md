@@ -3,6 +3,16 @@
 사진과 이야기를 올리면, 무작위로 선정된 한 사람이 애니메이션의 주인공이 되는 참여형 홈페이지.
 빌드 도구 없이 HTML/CSS/JS만으로 동작하며 GitHub Pages에 그대로 올라갑니다.
 
+## Editable profile starting estimates
+
+Selecting Women/Men and entering valid height and weight fills chest, waist and hip circumferences in whole centimetres. `fit-sizing.js` uses a geometric heuristic: anchor circumference × sqrt((weight / height) / (anchor weight / anchor height)). The anchors are design defaults, not fitted population statistics: men 175 cm / 75 kg with 100 / 84 / 100 cm; women 165 cm / 60 kg with 88 / 74 / 98 cm. These values are neither measured averages nor body-scan outputs, and the UI labels them Estimated.
+
+Initial top/bottom sizes come from the selected brand's existing catalog charts (UNIQLO by default when no specific brand is chosen). Repeated charts are deduplicated; the middle suggested label is selected, with waist-in-inch labels preferred for bottoms. Product-level recommendations still use each item's own chart. Unsupported ranges stay unselected instead of being forced to the largest/smallest size.
+
+Every auto-filled field retains its provenance. Changes to height, weight, category, reference brand or fit update automatic fields only. Direct edits, including deliberately empty fields and a known XL, persist until the visitor explicitly chooses Use suggested values again. Estimated circumferences never override an explicitly selected usual size, and an automatically suggested size is never treated as a reported usual size. No AI service or paid generation is called by autofill.
+
+Validation: `node --test tests/fit-sizing.test.cjs backend/tryon/tests/studio.test.mjs`.
+
 ## Avatar completion → application
 
 The front avatar, completed four-view set and loaded 3D model each open the existing application form inside Fit Room (`fit.html#apply`). `fit-application.js` loads the form markup from Home, and `application-form.js` supplies the shared validation, photo handling and delivery behavior. No page reload occurs, so the current avatar viewer and downloads remain available. The Apply menu points to the in-page form once an avatar is ready.

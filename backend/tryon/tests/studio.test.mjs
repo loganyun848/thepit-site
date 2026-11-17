@@ -8,6 +8,46 @@ const html = readFileSync(new URL('../../../fit.html', import.meta.url), 'utf8')
 const script = readFileSync(new URL('../../../fit-tryon.js', import.meta.url), 'utf8');
 const image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jJ1cAAAAASUVORK5CYII=';
 const selection = {photo:'blob:original-test-photo',item:{id:'test-garment',image:'https://catalog.example/garment.jpg',brand:'UNIQLO',name:'Test sweater',sizing:{rows:[{label:'M'},{label:'XL'}]}},recommendation:{usual:{label:'XL'}}};
+function profileSetup() {
+  const dom=new JSDOM(html,{url:'https://the-pit.site/fit.html',runScripts:'outside-only'}),w=dom.window;
+  w.THEPIT_CONFIG={};w.FIT_TRYON={clear(){}};
+  w.HTMLElement.prototype.scrollIntoView=function(){};
+  for(const file of ['fit-catalog.js','fit-sizing.js','fit.js'])w.eval(readFileSync(new URL('../../../'+file,import.meta.url),'utf8'));
+  const form=w.document.getElementById('measureForm');
+  function change(key,value){form.elements[key].value=value;form.elements[key].dispatchEvent(new w.Event('input',{bubbles:true}));}
+  function gender(value){const field=form.querySelector(`[name=gender][value=${value}]`);field.checked=true;field.dispatchEvent(new w.Event('change',{bubbles:true}));}
+  return {dom,w,form,change,gender};
+}
+
+test('Profile autofill populates five starting values and recalculates only automatic fields',()=>{
+  const s=profileSetup();try{
+    s.gender('men');s.change('height','180');s.change('weight','73');
+    for(const key of ['chest','waist','hips','usualTopSize','usualBottomSize'])assert.ok(s.form.elements[key].value,key);
+    assert.equal(s.form.elements.chest.dataset.source,'estimated');
+    assert.equal(s.form.elements.usualTopSize.dataset.source,'suggested');
+    const waist=Number(s.form.elements.waist.value);
+    s.change('chest','105');s.change('usualTopSize','XL');s.change('usualBottomSize','inch:34');s.change('weight','85');
+    assert.equal(s.form.elements.chest.value,'105');assert.equal(s.form.elements.usualTopSize.value,'XL');assert.equal(s.form.elements.usualBottomSize.value,'inch:34');
+    assert.ok(Number(s.form.elements.waist.value)>waist);assert.equal(s.form.elements.chest.dataset.source,'entered');
+    s.w.document.getElementById('refreshEstimates').click();
+    assert.equal(s.form.elements.chest.dataset.source,'estimated');assert.equal(s.form.elements.usualTopSize.dataset.source,'suggested');
+    assert.equal(Number(s.form.elements.chest.value),s.w.FIT_SIZING.estimateMeasurements({gender:'men',height:180,weight:85}).chest);
+  }finally{s.dom.window.close();}
+});
+
+test('Profile autofill clears stale automatic values for invalid inputs and respects deliberate blanks',()=>{
+  const s=profileSetup();try{
+    s.gender('women');s.change('height','168');s.change('weight','56');
+    s.change('chest','');s.change('usualTopSize','XL');s.change('height','');
+    assert.equal(s.form.elements.waist.value,'');assert.equal(s.form.elements.usualBottomSize.value,'');
+    assert.equal(s.form.elements.usualTopSize.value,'XL');
+    assert.equal(s.w.document.getElementById('refreshEstimates').disabled,true);
+    s.change('height','170');s.change('usualBrand','ZARA');
+    assert.equal(s.form.elements.chest.value,'');assert.equal(s.form.elements.usualTopSize.value,'XL');
+    assert.ok(s.form.elements.waist.value);assert.ok(s.form.elements.usualBottomSize.value);
+    assert.ok([...s.form.elements.usualTopSize.options].some(option=>option.value==='XS'));
+  }finally{s.dom.window.close();}
+});
 const prepared = value => 'data:image/jpeg;base64,'+Buffer.from('prepared:'+value).toString('base64');
 async function until(condition) { for(let i=0;i<50;i++) { if(condition()) return; await new Promise(resolve=>setImmediate(resolve)); } assert.ok(condition(),'expected UI state was not reached'); }
 function setup({configured=true,infer}={}) {

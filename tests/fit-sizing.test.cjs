@@ -77,3 +77,29 @@ test('Looser fit preference uses more garment ease when measurements are known',
   const p=E.profile({gender:'men',height:180,weight:73,chest:100});
   assert.equal(E.recommend(item,p).best.label,'M');assert.equal(E.recommend(item,{...p,fitPreference:'relaxed'}).best.label,'L');
 });
+
+test('Starting estimates require valid inputs and return whole-centimetre, editable approximations',()=>{
+  for(const input of [{},{gender:'men',height:180,weight:''},{gender:'women',height:221,weight:56},{gender:'men',height:180,weight:'Infinity'}])assert.equal(E.estimateMeasurements(input),null);
+  const lean=E.estimateMeasurements({gender:'men',height:180,weight:73});
+  const heavier=E.estimateMeasurements({gender:'men',height:180,weight:83});
+  for(const key of ['chest','waist','hips']){assert.ok(Number.isInteger(lean[key]));assert.ok(heavier[key]>lean[key]);}
+});
+
+test('Auto estimates and size suggestions are not treated as measured dimensions or a known usual size',()=>{
+  const values=E.estimateMeasurements({gender:'men',height:180,weight:73});
+  const p=E.profile({gender:'men',height:180,weight:73,...values,estimated:['chest','waist','hips'],usualTopSize:'XL',suggestedSizes:['usualTopSize']});
+  const item=items.find(x=>x.id==='uniqlo-men-453754');
+  const r=E.recommend(item,p);
+  assert.equal(r.status,'estimated');assert.equal(r.usual,null);assert.deepEqual(r.estimated,['chest']);
+  const sizes=E.suggestSizes(p,items);assert.ok(sizes.usualTopSize);assert.match(sizes.usualBottomSize,/^inch:\d+$/);
+  const known=E.recommend(item,{...p,suggestedSizes:[]});
+  assert.equal(known.status,'usual-size');assert.equal(known.best.label,'XL');
+});
+
+test('Only estimated dimensions relevant to a product lower its confidence',()=>{
+  const p=E.profile({gender:'women',height:168,weight:56,chest:84,waist:72,hips:94,estimated:['waist','hips']});
+  assert.equal(E.recommend(items.find(x=>x.id==='uniqlo-women-469410'),p).status,'recommended');
+  assert.equal(E.recommend(items.find(x=>x.gender==='women'&&x.brand==='UNIQLO'&&x.cat==='bottom'),p).status,'estimated');
+  const outside=E.suggestSizes({...p,chest:200,waist:200,hips:200},items);
+  assert.equal(outside.usualTopSize,'');assert.equal(outside.usualBottomSize,'');
+});
