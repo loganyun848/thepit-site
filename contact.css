@@ -19,6 +19,9 @@
 .contact-done p { color: var(--fog); margin: 16px 0 30px; }
 #contactAgain { display: block; margin: 20px auto 0; border: 0; background: transparent; color: var(--cream-2); cursor: pointer; font-size: .8rem; }
 .contact-footer { border-top: 1px solid #ffffff15; padding: 28px 20px; text-align: center; font-size: .75rem; color: var(--fog); }
+.contact-footer p { margin: 0 0 6px; }
+.contact-footer b { color: var(--cream-2); }
+.contact-footer a { color: var(--cream-2); text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 800px) {
   .contact-page { grid-template-columns: 1fr; gap: 26px; padding-top: 30px; padding-bottom: 40px; }
   .contact-heading { padding-top: 0; }
