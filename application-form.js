@@ -12,7 +12,7 @@
   const updateCount = () => {
     const n = story.value.length;
     counter.textContent = `${n} / 1200`;
-    counter.classList.toggle("ok", n >= 100 && n <= 1200);
+    counter.classList.toggle("ok", n >= 10 && n <= 1200);
   };
   story.addEventListener("input", updateCount); updateCount();
 
@@ -103,7 +103,7 @@
       target.scrollIntoView({ behavior: "smooth", block: "center" });
       if (first.type !== "file" && first.type !== "radio") try { first.focus({ preventScroll: true }); } catch (_) {}
       const s = $("textarea[name=story]");
-      if (first === s && s.value.length < 100) return "Please write at least 100 characters for your story. You have " + s.value.length + " so far.";
+      if (first === s && s.value.length < 10) return "Please write at least 10 characters for your story. You have " + s.value.length + " so far.";
       return "Please fill in every field marked with *.";
     }
     return "";

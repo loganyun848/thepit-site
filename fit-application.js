@@ -23,7 +23,7 @@
     if (loading) return loading;
     loadStatus.textContent = 'Opening your application…'; retry.hidden = true;
     loading = (async () => {
-      const response = await fetch('./index.html?v=20261117-apply1', { signal: AbortSignal.timeout(15000) });
+      const response = await fetch('./index.html?v=20261117-story10', { signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw Error('Application form could not be loaded. Your avatar is still available above.');
       const page = new DOMParser().parseFromString(await response.text(), 'text/html');
       const template = page.querySelector('#apply > .container');
