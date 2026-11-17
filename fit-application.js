@@ -14,7 +14,7 @@
   function suggest() {
     if (!draft || !controller) return;
     controller.suggestPhoto('body', draft.original);
-    controller.suggestPhoto('face', draft.face);
+    controller.suggestPhoto('face', imagePattern.test(draft.face || '') ? draft.face : draft.original);
     controller.suggestField('height', draft.height);
     controller.suggestField('size', /^(XXL|[3-9]XL)$/.test(draft.size) ? '2XL+' : draft.size);
   }
@@ -23,7 +23,7 @@
     if (loading) return loading;
     loadStatus.textContent = 'Opening your application…'; retry.hidden = true;
     loading = (async () => {
-      const response = await fetch('./index.html?v=20261117-story10', { signal: AbortSignal.timeout(15000) });
+      const response = await fetch('./index.html?v=20261117-applyfix2', { signal: AbortSignal.timeout(15000) });
       if (!response.ok) throw Error('Application form could not be loaded. Your avatar is still available above.');
       const page = new DOMParser().parseFromString(await response.text(), 'text/html');
       const template = page.querySelector('#apply > .container');
@@ -33,7 +33,8 @@
       const heading = clone.querySelector('h2'); heading.id = 'fitApplyTitle'; heading.tabIndex = -1;
       heading.textContent = 'Your avatar is ready. Your story is next.';
       clone.querySelector('.eyebrow').textContent = '05 / APPLY WITH YOUR AVATAR';
-      clone.querySelector('.sub').textContent = 'Review your images, add your story and contact details, then submit your application. Nothing is sent until you choose Submit.';
+      clone.querySelector('.sub').textContent = 'Review your images, add your story and contact details, then submit your application. Fields marked optional can be left blank. Nothing is sent until you choose Submit.';
+      clone.querySelector('.fs__help').append(document.createTextNode(' Your Fit Room photos are carried over. If you skipped the optional face reference, your original photo is reused below; replace it if your face is unclear.'));
       const summary = document.createElement('div'); summary.className = 'fit-application-summary'; summary.id = 'fitApplicationSummary';
       clone.querySelector('#applyForm').before(summary);
       clone.querySelector('#doneYoutube').href = window.THEPIT_CONFIG.YOUTUBE_CHANNEL_URL;

@@ -307,6 +307,10 @@ select option { background: var(--ink-2); color: var(--cream); }
 input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245,185,66,.18); }
 input::placeholder, textarea::placeholder { color: rgba(255,255,255,.3); }
 .invalid { border-color: var(--err) !important; }
+.field-error, .field .field-error { display: block; color: var(--err); font-size: .8rem; line-height: 1.5; margin-top: 5px; }
+.field-error[hidden] { display: none; }
+.upload.has-error .upload__box, .field.has-error .chip span { border-color: var(--err); }
+.check.has-error { outline: 1px solid var(--err); outline-offset: 5px; border-radius: 4px; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }

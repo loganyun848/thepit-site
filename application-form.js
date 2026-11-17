@@ -53,7 +53,7 @@
       if (photo) photos[key] = photo; else delete photos[key];
       if (photo) pimg.src = photo.dataUrl; else pimg.removeAttribute('src');
       preview.hidden = !photo; box.classList.toggle('has-file', !!photo);
-      input.classList.remove('invalid');
+      refreshValidation();
     };
     uploads[key] = { show: showPhoto, cancel: () => { uploadVersion++; input.value = ''; } };
 
@@ -67,7 +67,8 @@
         const dataUrl = await resizeToDataUrl(file);
         if (version !== uploadVersion) return;
         delete suggestedPhotos[key];
-        showPhoto({ name: file.name, type: "image/jpeg", dataUrl }); note("");
+        showPhoto({ name: file.name, type: "image/jpeg", dataUrl });
+        if (!validationAttempted) note("");
       } catch (err) { if (version === uploadVersion) note(err.message); }
       finally { pendingUploads--; submitBtn.disabled = sending || pendingUploads > 0; }
     }
@@ -82,32 +83,76 @@
   });
 
   /* ── 폼 제출 ── */
-  const form = $("#applyForm"), noteEl = $("#formNote"), submitBtn = $("#submitBtn");
+  const form = $("#applyForm"), noteEl = $("#applicationNote", form) || $("#formNote", form), submitBtn = $("#submitBtn");
   const doneBox = $("#doneBox");
   let sending = false;
+  let validationAttempted = false;
+  const feedback = new Map();
+  const labels = {
+    name: 'Name or nickname', email: 'Email', country: 'Country', ageGroup: 'Age group',
+    headline: 'One-line intro', story: 'Your story', color: 'Your color',
+    photoFace: 'Face photo', photoBody: 'Full-body photo',
+    agreeSelf: 'Photo ownership confirmation', agreePortrait: 'Character and publication consent',
+    agreePrivacy: 'Privacy consent', agreeAge: 'Age / guardian confirmation'
+  };
   function note(msg, ok = false) { noteEl.textContent = msg; noteEl.classList.toggle("ok", ok); }
 
-  function validate() {
-    let first = null;
-    $$("[required]", form).forEach(el => el.classList.remove("invalid"));
-    for (const el of $$("[required]", form)) {
-      let bad = false;
-      if (el.type === "checkbox") bad = !el.checked;
-      else if (el.type === "radio") bad = !form.querySelector(`input[name="${el.name}"]:checked`);
-      else if (el.type === "file") bad = !photos[el.closest(".upload").dataset.key];
-      else bad = !el.checkValidity();
-      if (bad) { el.classList.add("invalid"); if (!first) first = el; }
-    }
-    if (first) {
-      const target = first.type === "file" ? first.closest(".upload") : (first.type === "radio" || first.type === "checkbox") ? first.closest("label, .field") : first;
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      if (first.type !== "file" && first.type !== "radio") try { first.focus({ preventScroll: true }); } catch (_) {}
-      const s = $("textarea[name=story]");
-      if (first === s && s.value.length < 10) return "Please write at least 10 characters for your story. You have " + s.value.length + " so far.";
-      return "Please fill in every field marked with *.";
-    }
-    return "";
+  function fieldError(el) {
+    const label = labels[el.name] || el.name;
+    if (el.type === 'checkbox') return el.checked ? '' : `Please confirm: ${label}.`;
+    if (el.type === 'radio') return form.elements.namedItem(el.name).value ? '' : `Please select ${label.toLowerCase()}.`;
+    if (el.type === 'file') return photos[el.closest('.upload').dataset.key] ? '' : `Please add your ${label.toLowerCase()}.`;
+    const value = el.value.trim();
+    if (!value) return `Please ${el.tagName === 'SELECT' ? 'select' : 'enter'} ${label.toLowerCase()}.`;
+    if (el.minLength > 0 && value.length < el.minLength) return `${label} needs at least ${el.minLength} characters. You have ${value.length}.`;
+    if (el.maxLength > 0 && value.length > el.maxLength) return `${label} must be ${el.maxLength} characters or fewer.`;
+    if (el.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address, such as name@example.com.';
+    return el.checkValidity() ? '' : `Please check ${label.toLowerCase()}.`;
   }
+  function showError(el, message) {
+    const wrapper = el.closest('.upload, .field, .check');
+    let entry = feedback.get(el);
+    if (!entry && message) {
+      const error = document.createElement('small');
+      error.id = `apply-error-${el.name}`; error.className = 'field-error';
+      (el.type === 'checkbox' ? wrapper.querySelector('span') : wrapper).append(error);
+      const target = el.type === 'file' ? wrapper.querySelector('.upload__box') : el;
+      entry = { error, target, describedBy: target.getAttribute('aria-describedby') || '' };
+      feedback.set(el, entry);
+    }
+    el.classList.toggle('invalid', !!message);
+    wrapper.classList.toggle('has-error', !!message);
+    if (!entry) return;
+    entry.error.textContent = message; entry.error.hidden = !message;
+    if (message) {
+      entry.target.setAttribute('aria-invalid', 'true');
+      entry.target.setAttribute('aria-describedby', `${entry.describedBy} ${entry.error.id}`.trim());
+    } else {
+      entry.target.removeAttribute('aria-invalid');
+      if (entry.describedBy) entry.target.setAttribute('aria-describedby', entry.describedBy);
+      else entry.target.removeAttribute('aria-describedby');
+    }
+  }
+  function validate(moveFocus = true) {
+    validationAttempted = true;
+    const problems = [];
+    for (const el of $$("[required]", form)) {
+      const message = fieldError(el);
+      showError(el, message);
+      if (message) problems.push({ el, message });
+    }
+    if (!problems.length) return '';
+    const first = problems[0].el;
+    if (moveFocus) {
+      first.closest('.upload, .field, .check').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const target = first.type === 'file' ? first.closest('.upload').querySelector('.upload__box') : first;
+      try { target.focus({ preventScroll: true }); } catch (_) {}
+    }
+    return problems[0].message + (problems.length > 1 ? ' Also check: ' + problems.slice(1).map(p => labels[p.el.name] || p.el.name).join(', ') + '.' : '');
+  }
+  function refreshValidation() { if (validationAttempted && !sending) note(validate(false)); }
+  form.addEventListener('input', refreshValidation);
+  form.addEventListener('change', refreshValidation);
 
   function collect() {
     const fd = new FormData(form);
@@ -146,6 +191,8 @@
   });
 
   function resetForm() {
+    validationAttempted = false;
+    for (const el of feedback.keys()) showError(el, '');
     form.reset(); Object.keys(photos).forEach(k => delete photos[k]);
     Object.keys(suggestedPhotos).forEach(k => delete suggestedPhotos[k]);
     Object.keys(suggestedFields).forEach(k => delete suggestedFields[k]);

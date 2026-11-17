@@ -99,7 +99,7 @@ test('Changing the source clears stale attachments and keeps the entered story',
     s.emit({ ...detail, height: 170, size: 'L', face: '' }); await settle();
     assert.equal(s.$('applyForm').elements.name.value, 'Fixture');
     assert.equal(s.$('applyForm').elements.height.value, '170');
-    assert.equal(s.$('applyForm').applicationController.collect().photos.some(p => p.key === 'face'), false);
+    assert.equal(s.$('applyForm').applicationController.collect().photos.find(p => p.key === 'face').dataUrl, image);
     assert.equal(s.deliveries.length, 0);
   } finally { s.dom.window.close(); }
 });
@@ -142,5 +142,79 @@ test('Home keeps required photo/consent validation and retains fields after a de
     s.failures(false); s.$('submitBtn').click(); await settle();
     assert.equal(s.$('doneBox').hidden, false);
     s.$('doneAgain').click(); assert.equal(controller.collect().photos.length, 0);
+  } finally { s.dom.window.close(); }
+});
+
+test('Fit Room accepts required answers with no optional face reference or optional answers', async () => {
+  const s = setup();
+  try {
+    s.emit({ ...detail, face: '' }); await settle();
+    const form = s.fill();
+    form.elements.story.value = 'Ten letters';
+    form.elements.color[1].checked = true;
+    for (const key of ['sns', 'place', 'toGolky', 'height', 'size']) form.elements[key].value = '';
+    assert.equal(form.applicationController.validate(), '');
+    s.$('submitBtn').click(); await settle();
+    assert.equal(s.deliveries.length, 1, s.$('applicationNote').textContent);
+    assert.equal(s.deliveries[0].photos.find(p => p.key === 'face').dataUrl, detail.original);
+    assert.equal(s.deliveries[0].agreeNews, 'N');
+  } finally { s.dom.window.close(); }
+});
+
+test('Home accepts all optional fields blank while keeping the two required photos', async () => {
+  const s = setup(true);
+  try {
+    const form = s.fill();
+    form.applicationController.suggestPhoto('face', image);
+    form.applicationController.suggestPhoto('body', image);
+    s.$('submitBtn').click(); await settle();
+    assert.equal(s.deliveries.length, 1);
+    assert.equal(s.deliveries[0].style, '');
+    assert.equal(s.deliveries[0].agreeNews, 'N');
+    assert.deepEqual(s.deliveries[0].photos.map(p => p.key), ['face', 'body']);
+  } finally { s.dom.window.close(); }
+});
+
+test('Missing photos have visible errors and focus; valid changes clear them', async () => {
+  const s = setup(true);
+  try {
+    const form = s.fill(), controller = form.applicationController;
+    s.$('submitBtn').click(); await settle();
+    assert.match(s.$('applicationNote').textContent, /face photo.*Full-body photo/i);
+    const button = s.$('photoFace').closest('.upload').querySelector('.upload__box');
+    assert.equal(s.w.document.activeElement, button);
+    assert.equal(button.getAttribute('aria-invalid'), 'true');
+    assert.equal(s.$('apply-error-photoFace').hidden, false);
+    controller.suggestPhoto('face', image); controller.suggestPhoto('body', image);
+    assert.equal(s.$('applicationNote').textContent, '');
+    assert.equal(button.hasAttribute('aria-invalid'), false);
+    assert.equal(s.$('apply-error-photoFace').hidden, true);
+    assert.equal(s.deliveries.length, 0);
+  } finally { s.dom.window.close(); }
+});
+
+test('Required answer and consent failures name the exact field and preserve entered data', async () => {
+  const s = setup();
+  try {
+    s.emit(); await settle(); const form = s.fill();
+    assert.equal(form.noValidate, true);
+    form.elements.email.value = 'invalid-email';
+    form.elements.agreePrivacy.checked = false;
+    s.$('submitBtn').click(); await settle();
+    assert.match(s.$('applicationNote').textContent, /valid email.*Privacy consent/);
+    assert.equal(s.deliveries.length, 0);
+    form.elements.email.value = 'fixture@example.com';
+    form.elements.agreePrivacy.click();
+    assert.equal(s.$('applicationNote').textContent, '');
+    form.elements.story.value = '123456789';
+    s.$('submitBtn').click(); await settle();
+    assert.match(s.$('applicationNote').textContent, /at least 10 characters/);
+    assert.equal(s.deliveries.length, 0);
+    form.elements.story.value += '0';
+    form.elements.story.dispatchEvent(new s.w.Event('input', { bubbles: true }));
+    assert.equal(s.$('applicationNote').textContent, '');
+    s.$('submitBtn').click(); await settle();
+    assert.equal(s.deliveries.length, 1);
+    assert.equal(s.deliveries[0].story, '1234567890');
   } finally { s.dom.window.close(); }
 });
