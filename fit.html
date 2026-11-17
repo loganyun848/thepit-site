@@ -12,7 +12,7 @@
   <link rel="icon" href="assets/golky.webp" type="image/webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=20261117-en1" /><link rel="stylesheet" href="fit.css?v=20261117-apply1" />
+  <link rel="stylesheet" href="style.css?v=20261117-en1" /><link rel="stylesheet" href="fit.css?v=20261117-motion1" />
   <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
 </head>
 <body class="fit-page">
@@ -114,6 +114,14 @@
           <div class="avatar-export-row"><label for="avatarHeight">Project height (cm)<input id="avatarHeight" type="number" min="80" max="250" step="0.1" value="180" /></label><p class="fit-hint">Height scales the whole model. It does not reconstruct measured chest, waist or limb dimensions.</p></div>
           <div class="tryon-buttons"><button id="downloadBlend" class="btn btn--gold">Download Blender project (.blend) ↓</button><button id="downloadModel" class="btn btn--ghost">Download original model (.glb) ↓</button><button id="downloadCamera" class="btn btn--ghost">Save current camera view ↓</button></div>
           <p id="avatarExportStatus" class="fit-hint" role="status" aria-live="polite"></p>
+          <div id="productionWorkspace" class="production-workspace" hidden>
+            <p class="eyebrow">NEXT / MOTION PREVIEW</p><h3>Bring your avatar into motion.</h3>
+            <p class="fit-hint">Our studio program adds a body rig and a five-second wave, then saves an MP4 and an editable Blender project for review. Set the correct front direction above before sending.</p>
+            <label class="tryon-consent"><input id="productionConsent" type="checkbox" /><span>I agree to send this 3D model, project height and front direction to the LECPLE production team for a motion preview. <a href="privacy.html#motion-production" target="_blank" rel="noopener">Processing details ↗</a></span></label>
+            <div class="tryon-buttons"><button id="sendProduction" type="button" class="btn btn--gold" disabled>Send for a 5-second preview</button><button id="checkProduction" type="button" class="btn btn--ghost" hidden>Check production status</button></div>
+            <p id="productionStatus" class="fit-hint" role="status" aria-live="polite"></p>
+            <p class="fit-hint">No additional AI generation credits. Processing starts when our production workstation is online. Motion previews require human review; they are not automatically published.</p>
+          </div>
           <p class="fit-hint">The Blender file includes the mesh, UVs, packed PBR textures, 12 cameras and lights. This is a static model with no skeleton, facial expressions or motion. Likeness, hands, hair and unseen surfaces require further review and refinement for production use.</p>
         </div>
       </div>
@@ -127,7 +135,8 @@
   </main>
   <footer class="footer"><div class="container footer__grid"><div><div class="footer__brand">THE <em>PIT</em></div><p class="footer__tag">Find your color. Find your fit.</p><div class="footer__social"><a id="footYoutube" target="_blank" rel="noopener">YouTube</a><a id="footMail">Email</a></div></div><div class="footer__info"><p><b>LECPLE Inc.</b> · THE PIT production team</p><p>Fit Room provides independent size guidance.<br />It is not officially affiliated with UNIQLO or ZARA.</p><p><a href="privacy.html">Privacy Policy</a> · <a href="index.html">Home</a></p><p class="footer__copy">© 2026 LECPLE Inc.</p></div></div></footer>
   <noscript><p class="container">Please enable JavaScript to use Fit Room.</p></noscript>
-  <script src="config.js?v=ai-20261116-live"></script><script src="fit-catalog.js?v=20261117-en1"></script><script src="fit-sizing.js?v=20261117-en1"></script><script src="form-delivery.js?v=20261117-apply1"></script><script src="application-form.js?v=20261117-apply1"></script><script src="fit-application.js?v=20261117-apply1"></script><script src="fit-tryon.js?v=20261117-apply1"></script><script src="fit.js?v=20261117-en1"></script>
-  <script type="module" src="avatar-studio.mjs?v=20261117-apply1"></script>
+  <script src="config.js?v=ai-20261116-live"></script><script src="fit-catalog.js?v=20261117-en1"></script><script src="fit-sizing.js?v=20261117-en1"></script><script src="form-delivery.js?v=20261117-apply1"></script><script src="application-form.js?v=20261117-apply1"></script><script src="fit-application.js?v=20261117-motion1"></script><script src="fit-tryon.js?v=20261117-apply1"></script><script src="fit.js?v=20261117-en1"></script>
+  <script src="production-handoff.js?v=20261117-motion1"></script>
+  <script type="module" src="avatar-studio.mjs?v=20261117-motion1"></script>
 </body>
 </html>

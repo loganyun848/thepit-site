@@ -52,6 +52,7 @@ export async function createAvatarViewer(container,buffer,{onCamera=()=>{}}={}) 
     shot,
     autoRotate(value){controls.autoRotate=value;},
     setFront(){root.rotation.y-=controls.getAzimuthalAngle();root.updateMatrixWorld(true);},
+    frontYaw(){return Math.atan2(Math.sin(root.rotation.y),Math.cos(root.rotation.y));},
     async snapshot(){renderer.render(scene,camera);return new Promise(resolve=>renderer.domElement.toBlob(resolve,'image/png'));},
     async blend(height){
       const [template,index]=await Promise.all([fetch('./assets/avatar/avatar-template.blend').then(r=>{if(!r.ok)throw Error('The Blender template could not be loaded.');return r.arrayBuffer();}),fetch('./assets/avatar/template-index.json').then(r=>r.json())]);

@@ -59,6 +59,7 @@ async function resultFor(job, env, network) {
   if (!glb) throw bad(502,'The generated 3D model file could not be found.','MODEL_FILE_MISSING');
   return {glb,blend:assetURL(result.model_urls?.blend),fbx:assetURL(result.model_urls?.fbx)};
 }
+export async function modelSource(job, env, network) { return (await resultFor(job,env,network)).glb; }
 export async function modelStatus(ticket, env, network) {
   const job = await readTicket(ticket,env.FAL_KEY);
   const response = await network(job.status,{headers:headers(env),signal:AbortSignal.timeout(15000)});

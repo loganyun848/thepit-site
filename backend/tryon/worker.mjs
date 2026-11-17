@@ -1,6 +1,8 @@
 import CATALOG from './catalog.json' with { type: 'json' };
 import { CHARACTER_APPEARANCE, characterPrompt } from './character-style.mjs';
 import { submitModel, modelStatus, modelFile } from './avatar-model.mjs';
+import { productionRoute } from './production.mjs';
+export { ProductionQueue } from './production.mjs';
 
 const MODEL_URL = 'https://fal.run/fal-ai/fashn/tryon/v1.6';
 const CHARACTER_URL = 'https://fal.run/fal-ai/flux-2-pro/edit';
@@ -44,8 +46,10 @@ export function createHandler(network = fetch) {
     const cors = { 'Access-Control-Allow-Origin': origin || allowed[0], 'Vary': 'Origin', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
     if (origin && !allowed.includes(origin)) return json({ ok: false, error: 'This site is not permitted.' }, 403);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    const production = await productionRoute(request,env,network,cors);
+    if (production) return production;
     const ready = !!(env.FAL_KEY && env.TURNSTILE_SECRET && env.TRYON_GATE);
-    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet', 'avatar-model'], characterAppearance: CHARACTER_APPEARANCE, revision:'20261117-en1', language:'en' }, 200, cors);
+    if (url.pathname === '/health' && request.method === 'GET') return json({ ready, provider: 'fal.ai', features: ['tryon', 'character', 'character-sheet', 'avatar-model', 'motion-production'], productionReady:!!(env.PRODUCTION_KEY&&env.PRODUCTION_QUEUE), characterAppearance: CHARACTER_APPEARANCE, revision:'20261117-motion1', language:'en' }, 200, cors);
     if (!['/tryon', '/character', '/character-view', '/character-model', '/character-model/status', '/character-model/file'].includes(url.pathname) || request.method !== 'POST') return json({ ok: false, error: 'This request was not found.' }, 404, cors);
     if (!origin || !allowed.includes(origin)) return json({ ok: false, error: 'Please submit your request from the website.' }, 403, cors);
     if (!ready) return json({ ok: false, error: 'The AI try-on service is being connected.' }, 503, cors);

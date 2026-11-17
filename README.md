@@ -195,3 +195,9 @@ node --test tests/avatar-model.test.mjs tests/avatar-blend.test.mjs backend/tryo
 ```
 
 Schema references: [Meshy on fal](https://fal.ai/models/meshy/v7.1/multi-image-to-3d/api), [fal queue protocol](https://fal.ai/docs/documentation/model-apis/inference/queue).
+
+## Internal motion production (2026-11-17)
+
+After 3D completion, Fit Room offers a separately consented transfer into the internal production queue. A private Python/Blender worker downloads the verified model, fits an estimated body rig and renders a 120-frame / 24-fps wave preview. It saves an MP4, animated GLB and packed Blender project for human review. This stage uses no paid generative API. See [operator instructions](backend/production/README.md) for setup, output locations, limitations and retention.
+
+The existing browser export remains a static model. The internal motion project is a separate deliverable with a 19-bone rig. A-pose geometry and skin weights need review before film use; the preview is not a certified body reconstruction or a fully automatic production rig. The website shows status but does not publicly host private videos.

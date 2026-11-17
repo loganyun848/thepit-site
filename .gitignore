@@ -7,3 +7,6 @@ node_modules/
 .dev.vars*
 .env*
 !*.example
+backend/production/runtime/
+backend/production/__pycache__/
+backend/production/tests/__pycache__/

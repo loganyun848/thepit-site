@@ -74,6 +74,7 @@
     const back = document.createElement('a'); back.href = draft.stage === 'model' ? '#avatarViewerWorkspace' : '#character';
     back.className = 'btn btn--ghost'; back.textContent = 'Back to avatar · Review & save ↑';
     summary.replaceChildren(title, outfit, grid, note, back);
+    if(draft.stage==='model') {const motion=document.createElement('a');motion.href='#productionWorkspace';motion.className='btn btn--gold';motion.textContent='Create a 5-second motion preview ↑';summary.append(motion);}
   }
   async function openApplication() {
     if (!draft) return;

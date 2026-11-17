@@ -9,7 +9,7 @@
     "DAILY_LIMIT": "50",
     "VISITOR_DAILY_LIMIT": "50"
   },
-  "durable_objects": { "bindings": [{ "name": "TRYON_GATE", "class_name": "TryOnGate" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TryOnGate"] }],
+  "durable_objects": { "bindings": [{ "name": "TRYON_GATE", "class_name": "TryOnGate" }, {"name":"PRODUCTION_QUEUE","class_name":"ProductionQueue"}] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TryOnGate"] }, {"tag":"v2-motion","new_sqlite_classes":["ProductionQueue"]}],
   "observability": { "enabled": false }
 }

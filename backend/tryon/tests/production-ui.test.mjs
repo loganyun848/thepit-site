@@ -1,0 +1,9 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {JSDOM} from 'jsdom';
+const html=readFileSync(new URL('../../../fit.html',import.meta.url),'utf8'),script=readFileSync(new URL('../../../production-handoff.js',import.meta.url),'utf8');
+const tick=()=>new Promise(setImmediate);
+function setup(){const dom=new JSDOM(html,{url:'https://the-pit.site',runScripts:'outside-only'}),w=dom.window,calls=[];w.THEPIT_CONFIG={TRYON_ENDPOINT:'https://worker.test'};w.AbortSignal=AbortSignal;w.fetch=async(url,init)=>{calls.push({url,data:JSON.parse(init.body)});return Response.json({ok:true,jobId:'test-model',status:'QUEUED',receipt:'test-receipt'});};w.eval(script);const $=id=>w.document.getElementById(id);return{dom,w,$,calls,ready(){w.dispatchEvent(new w.CustomEvent('avatar:model-ready',{detail:{ticket:'model-ticket',settings:()=>({height:180,yaw:1.2})}}));}};}
+test('completed model is not sent without separate consent and a click',async()=>{const s=setup();try{s.ready();assert.equal(s.calls.length,0);assert.equal(s.$('sendProduction').disabled,true);s.$('productionConsent').checked=true;s.$('productionConsent').dispatchEvent(new s.w.Event('change'));s.$('sendProduction').click();await tick();assert.equal(s.calls.length,1);assert.equal(s.calls[0].data.yaw,1.2);assert.equal(s.calls[0].data.consent,true);assert.equal(s.$('sendProduction').disabled,true);}finally{s.dom.window.close();}});
+test('replacing avatar clears production access and prior consent',async()=>{const s=setup();try{s.ready();s.$('productionConsent').checked=true;s.w.dispatchEvent(new s.w.CustomEvent('avatar:model-ready',{detail:null}));assert.equal(s.$('productionWorkspace').hidden,true);assert.equal(s.$('productionConsent').checked,false);assert.equal(s.$('sendProduction').disabled,true);assert.equal(s.calls.length,0);}finally{s.dom.window.close();}});

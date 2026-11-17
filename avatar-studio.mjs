@@ -9,6 +9,7 @@ function buttons(){
   $('pauseModel').hidden=!polling;
 }
 function reset(){
+  window.dispatchEvent(new CustomEvent('avatar:model-ready',{detail:null}));
   epoch++;pollRun++;refs=null;ticket='';token='';busy=false;polling=false;modelBuffer=null;rotating=false;
   if(widget!==null&&window.turnstile)window.turnstile.remove(widget);widget=null;
   viewer?.dispose();viewer=null;
@@ -59,13 +60,14 @@ async function loadModel(version){
   const response=await fetch(endpoint+'/character-model/file',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket,format:'glb'}),signal:AbortSignal.timeout(120000)});
   if(!response.ok)throw Error('Model download failed. Select Check existing job to try again.');
   const buffer=await response.arrayBuffer();if(version!==epoch)return;
-  const [{createAvatarViewer},cameraPlan]=await Promise.all([import('./avatar-viewer.mjs?v=20261117-en1'),fetch('./avatar-camera-plan.json?v=20261117-en1').then(r=>r.json())]);if(version!==epoch)return;
+  const [{createAvatarViewer},cameraPlan]=await Promise.all([import('./avatar-viewer.mjs?v=20261117-motion1'),fetch('./avatar-camera-plan.json?v=20261117-en1').then(r=>r.json())]);if(version!==epoch)return;
   plans=cameraPlan;modelBuffer=buffer;$('avatarViewerWorkspace').hidden=false;
   let loaded;
   try{loaded=await createAvatarViewer($('avatarViewer'),buffer,{onCamera:plan=>{$('avatarCameraLabel').textContent=plan?`${plan.label} · Azimuth ${plan.azimuth}° / Elevation ${plan.elevation}°`:'Free view';if(plan){rotating=false;$('avatarAutoRotate').setAttribute('aria-pressed','false');}for(const b of $('avatarCameraGrid').children)b.setAttribute('aria-pressed',String(b.dataset.id===plan?.id));}});}catch(error){$('downloadBlend').disabled=true;$('avatarExportStatus').textContent='The browser could not open this model. You can still download the original GLB. '+error.message;say('3D generation is complete, but the preview could not load. Download the original GLB and import it into Blender.');buttons();return;}
   if(version!==epoch){loaded.dispose();return;}viewer=loaded;modelBuffer=buffer;
   $('avatarCameraGrid').replaceChildren(...plans.map(plan=>{const button=document.createElement('button');button.type='button';button.dataset.id=plan.id;button.setAttribute('aria-pressed',String(plan.id==='front'));const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=plan.label;small.textContent=plan.purpose;button.append(strong,small);button.addEventListener('click',()=>viewer?.shot(plan));return button;}));
   say('Your 3D model is ready. Drag to rotate or choose a camera preset. Save the .blend and original GLB before leaving this page.');buttons();
+  window.dispatchEvent(new CustomEvent('avatar:model-ready',{detail:{ticket,settings:()=>({height:Number($('avatarHeight').value),yaw:viewer?.frontYaw()||0})}}));
   window.dispatchEvent(new CustomEvent('avatar:application', {detail:window.FIT_TRYON?.applicationResult('model')}));
 }
 function save(blob,filename){if(!blob)throw Error('The file could not be created.');const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
